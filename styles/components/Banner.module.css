@@ -1,0 +1,31 @@
+.banner {
+    background: #fc4c02;
+    padding: 2rem 0 2rem 0;
+    border-bottom: 6px solid #dddddd;
+}
+
+#siteTitle {
+    color: white;
+    font-size: 2rem;
+    text-align: center;
+    font-weight: bold;
+    text-decoration: underline;
+}
+
+.nav {
+    display: flex;
+    list-style-type: none;
+    justify-content: center;
+}
+
+.navItem {
+    display: block;
+    width: 100%;
+    text-align: center;
+    padding: 1rem;
+    /* border: 1px solid black; */
+    background: #eeeeee;
+    text-decoration: underline;
+    border-right: 1px solid #dddddd;
+    color: #3B5280
+}

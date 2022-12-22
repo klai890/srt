@@ -3,9 +3,12 @@
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
-  padding: 6rem;
+  /* padding: 6rem; */
+  padding: 1rem;
+  /* border: 1px solid black; */
   min-height: 100vh;
 }
+
 
 .description {
   display: inherit;
@@ -46,12 +49,25 @@
   max-width: 100%;
 }
 
+.homeGrid {
+  display: grid;
+  grid-template-columns: 1;
+  grid-template-rows: 3;
+  width: var(--max-width);
+  max-width: 100%;
+}
+
 .card {
   padding: 1rem 1.2rem;
   border-radius: var(--border-radius);
   background: rgba(var(--card-rgb), 0);
-  border: 1px solid rgba(var(--card-border-rgb), 0);
+  border: 1px solid rgba(var(--card-border-rgb), 0.5);
   transition: background 200ms, border 200ms;
+  background: rgba(var(--card-rgb), 0.1);
+  margin: 20px 0 0 0;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
 .card span {
@@ -69,7 +85,7 @@
   opacity: 0.6;
   font-size: 0.9rem;
   line-height: 1.5;
-  max-width: 30ch;
+
 }
 
 .center {
@@ -155,7 +171,7 @@
 @media (hover: hover) and (pointer: fine) {
   .card:hover {
     background: rgba(var(--card-rgb), 0.1);
-    border: 1px solid rgba(var(--card-border-rgb), 0.15);
+
   }
 
   .card:hover span {
@@ -179,15 +195,17 @@
     padding: 4rem;
   }
 
+  /* oh, btw I should mention .vercelLogo is the class of all svg images on home page */
+  .vercelLogo {
+    width: 50px;
+    height: 50px;
+  }
+
   .grid {
     grid-template-columns: 1fr;
     margin-bottom: 120px;
     max-width: 320px;
     text-align: center;
-  }
-
-  .card {
-    padding: 1rem 2.5rem;
   }
 
   .card h2 {

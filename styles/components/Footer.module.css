@@ -1,0 +1,9 @@
+.main {
+    background: #fc4c02;
+    padding: 1rem;
+    color: white;
+    border-top: 3px solid #dddddd;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
