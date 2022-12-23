@@ -1,12 +1,8 @@
 .main {
   display: flex;
   flex-direction: column;
-
   align-items: center;
-  /* padding: 6rem; */
-  padding: 1rem;
-  /* border: 1px solid black; */
-  /* min-height: 100vh; */
+  min-height: 100vh;
 }
 
 
@@ -51,8 +47,7 @@
 
 .homeGrid {
   display: grid;
-  grid-template-columns: 1;
-  grid-template-rows: 3;
+  grid-template-columns: 1fr;
   width: var(--max-width);
   max-width: 100%;
 }
@@ -292,5 +287,11 @@
   }
   to {
     transform: rotate(0deg);
+  }
+}
+
+@media scren and (max-width: 700px) {
+  .homeGrid {
+    width: 100%;
   }
 }
