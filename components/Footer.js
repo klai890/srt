@@ -14,19 +14,19 @@ export default function Banner() {
         <div className={footerStyles.main}>
 
           {/* Powered by Strava Credit */}
-          <div>
+          {/* <div>
             <p>Powered By</p>
             <a href="https://strava.com">
               <Image 
                 src="/strava.svg"
                 alt="Strava Logo"
                 className={footerStyles.logo}
-                width={150}
-                height={150}
+                width={120}
+                height={60}
                 priority
               />
             </a>
-          </div>
+          </div> */}
 
           {/* MY personal stamp! */}
           <div> Made with ♥ by Karena Lai </div>

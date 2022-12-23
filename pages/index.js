@@ -96,24 +96,26 @@ export default function Home() {
               </div>
           </Link>          
           
-          <Link href={`/gear`} className={styles.card}> 
-            <Image
-                src="/shoe.svg"
-                alt="excellent shoe vector"
-                className={styles.vercelLogo}
-                width={70}
-                height={70}
-                priority
-              />
-              <div>
-                <h2 className={inter.className}>
-                  Equipment
-                </h2>
-                <p className={inter.className}>
-                  #worshipyourshoes
-                </p>
-              </div>
-          </Link>
+          <div>
+            <Link href={`/gear`} className={styles.card}> 
+              <Image
+                  src="/shoe.svg"
+                  alt="excellent shoe vector"
+                  className={styles.vercelLogo}
+                  width={70}
+                  height={70}
+                  priority
+                />
+                <div>
+                  <h2 className={inter.className}>
+                    Equipment
+                  </h2>
+                  <p className={inter.className}>
+                    #worshipyourshoes
+                  </p>
+                </div>
+            </Link>
+          </div>
         </div>
 
           {/* <a
