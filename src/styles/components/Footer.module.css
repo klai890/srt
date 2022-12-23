@@ -1,5 +1,5 @@
 .main {
-    background: #fc4c02;
+    background: #EF225E;
     padding: 1rem;
     color: white;
     /* border-top: 3px solid #dddddd; */
@@ -7,4 +7,7 @@
     justify-content: space-between;
     align-items: center;
     text-align: center;
+    position: absolute;
+    width: 100%;
+    bottom: 0;
 }

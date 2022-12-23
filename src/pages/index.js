@@ -55,7 +55,7 @@ export default function Home() {
             />
           </div>
         </div> */}
-        
+        <main className={styles.main}>
         <div className={styles.homeGrid}>
 
           <Link href={`/mileage`} className={styles.card} > 
@@ -175,6 +175,7 @@ export default function Home() {
             </p>
           </a>
         </div> */}
+        </main>
     </Layout>
   )
 }

@@ -8,8 +8,8 @@
     color: white;
     font-size: 2rem;
     text-align: center;
-    font-weight: bold;
-    text-decoration: underline;
+    font-weight: 700;
+    /* text-decoration: underline; */
 }
 
 .nav {
