@@ -2,6 +2,17 @@ import styles from '../styles/Mileage.module.css'
 import Layout from '../components/Layout';
 import Image from 'next/image';
 
+// export async function getStaticProps() {
+//   // fetch the blog posts from the mock API
+//   const res = await fetch('http://localhost:3000/hello');
+//   const posts = await res.json();
+
+//   return {
+//     props: { posts } // props will be passed to the page
+//   };
+// }
+
+
 export default function Mileage() {
   return (
     <Layout>

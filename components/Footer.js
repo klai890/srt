@@ -10,7 +10,7 @@ const inter = Inter({ subsets: ['latin'] })
 export default function Banner() {
   return (
     <>
-      <main class={inter.className}>
+      <main className={inter.className}>
         <div className={footerStyles.main}>
 
           {/* Powered by Strava Credit */}
