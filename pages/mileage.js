@@ -1,6 +1,7 @@
 import styles from '../styles/Mileage.module.css'
 import Layout from '../components/Layout';
 import Image from 'next/image';
+import MileageButtons from '../sections/MileageButtons';
 
 // export async function getStaticProps() {
 //   // fetch the blog posts from the mock API
@@ -21,7 +22,7 @@ export default function Mileage() {
         <p> Track runs on Strava to automatically update a mileage log on Google Sheets! </p>
       </div>
 
-        {/* Image Gallery */}
+        {/* Image Gallery – Beautiful Advertising Screenshots */}
         <div className={styles.gallery}>
 
           <div className={styles.card}>
@@ -61,6 +62,9 @@ export default function Mileage() {
             />
           </div>
         </div>
+
+        {/* Buttons! */}
+        <MileageButtons />
 
     </Layout>
   )
