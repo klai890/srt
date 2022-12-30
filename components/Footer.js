@@ -7,7 +7,7 @@ import Link from 'next/link';
 
 const inter = Inter({ subsets: ['latin'] })
 
-export default function Banner() {
+export default function Footer() {
   return (
     <>
       <main className={inter.className}>
