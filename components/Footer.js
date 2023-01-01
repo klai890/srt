@@ -13,23 +13,16 @@ export default function Footer() {
       <main className={inter.className}>
         <div className={footerStyles.main}>
 
-          {/* Powered by Strava Credit */}
-          {/* <div>
-            <p>Powered By</p>
-            <a href="https://strava.com">
-              <Image 
-                src="/strava.svg"
-                alt="Strava Logo"
-                className={footerStyles.logo}
-                width={120}
-                height={60}
-                priority
+              {/* Mandatory  */}
+              <Image
+                src="/api_logo_pwrdBy_strava_horiz_white.svg"
+                alt="Powered by Strava"
+                width={200}
+                height={30}
               />
-            </a>
-          </div> */}
 
           {/* MY personal stamp! */}
-          <div> Made with ♥ by Karena Lai </div>
+          <div> © Karena Lai </div>
           </div>
       </main>
     </>
