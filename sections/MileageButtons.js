@@ -19,6 +19,10 @@ export default function MileageButtons() {
           <button className={styles.btn} id={styles.btn2}>  {/*onClick={() => signIn()} className={styles.stravaBtn}> */}
             Connect to Google Sheets
           </button>
+          
+          <button className={styles.btn} id={styles.btn2} onClick={() => signOut()}>
+            Sign Out
+          </button>
           </div>
         </div>
         

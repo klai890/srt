@@ -3,7 +3,9 @@
 /** ---------------------- AUTHORIZE -------------------------- */
 
 // This is an example of how to read a JSON Web Token from an API route
-// import { getToken } from "next-auth/jwt"
+import { getToken } from "next-auth/jwt"
+import { getActivities } from '../../lib/strava';
+
 
 // import type { NextApiRequest, NextApiResponse } from "next"
 
@@ -15,33 +17,27 @@
 //   // you will have to pass your secret as `secret` to `getToken`
 //   const token = await getToken({ req })
 //   res.send(JSON.stringify(token, null, 2))
-// }
 
-/**  --------------------- CALL STRAVA API -------------------- */
+
+/**  --------------------- CREATE STRAVA API -------------------- */
 
 var StravaApiV3 = require('strava_api_v3');
 var defaultClient = StravaApiV3.ApiClient.instance;
 
-// Configure OAuth2 access token for authorization: strava_oauth
+// // Configure OAuth2 access token for authorization: strava_oauth
 var strava_oauth = defaultClient.authentications['strava_oauth'];
-strava_oauth.accessToken = "3ae0997262becbed5cd70ac8ac2f26c00eae7a78"
+strava_oauth.accessToken = process.env.STRAVA_ACCESS_TOKEN;
 
-var api = new StravaApiV3.AthletesApi()
+var athletesApi = new StravaApiV3.AthletesApi();
+var activitiesApi = new StravaApiV3.ActivitiesApi();
 
 
 /* ----------------------- MAKE STRAVA API CALL --------------------- */
-export default function handler(req, res) {
-  var callback = function(error, data, response) {
-    if (error) {
-      console.error(error);
-    } else {
-      console.log('API called successfully. Returned data: ' + data);
-    }
-    console.log("<---------------------RESPONSE------------------->");
-    console.log(JSON.parse(response.text)); // oh god, please remember to do JSON.parse....
-
-    res.status(200).json({ data: response.text })
-  };
-
-  api.getLoggedInAthlete(callback);
+export default async function handler(req, res) {
+  const token = await getToken({req, secret: process.env.NEXTAUTH_SECRET});
+  const activities = await getActivities(token.id);
+  console.log(activities);
+  /* Display JSON Token to screen */
+  res.send(JSON.stringify(activities, null, 2))
+  // res.send(JSON.stringify(token, null, 2))
 };
