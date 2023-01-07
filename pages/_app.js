@@ -1,6 +1,8 @@
 import { SessionProvider } from "next-auth/react"
 import '../styles/globals.css'
 
+export const SITE_DOMAIN = 'http://localhost:3000';
+
 export default function App({
   Component,
   pageProps: { session, ...pageProps },

@@ -1,20 +1,38 @@
 import styles from '../styles/Mileage.module.css'
 import Layout from '../components/Layout';
 import Image from 'next/image';
-import MileageButtons from '../sections/MileageButtons';
 
-// export async function getStaticProps() {
-//   // fetch the blog posts from the mock API
-//   const res = await fetch('http://localhost:3000/hello');
-//   const posts = await res.json();
-
-//   return {
-//     props: { posts } // props will be passed to the page
-//   };
-// }
+import { useSession, signIn, signOut } from "next-auth/react"
+import {CSVLink, CSVDownload} from 'react-csv';
+import { getToken } from "next-auth/jwt"
+import { formatData, headers } from '../lib/strava/api/mileage-csv';
 
 
-export default function Mileage() {
+export async function getServerSideProps(context){
+  const token = await getToken({req: context.req, secret: process.env.NEXTAUTH_SECRET});
+  // console.log('SERVERSIDE PROPS TOKEN: ')
+  // console.log(token);
+  const data = await formatData(token.id);
+  
+  // console.log("SERVERSIDE PROPS DATA: ")
+  // console.log(data);
+
+  return {
+    props: {
+      csvData : data
+    }
+  }
+}
+
+
+/** @param {import('next').InferGetServerSidePropsType<typeof getServerSideProps> } props */
+export default function Mileage({ csvData }) {
+
+  console.log("CSV DATA: ")
+  console.log(csvData);
+
+  const { data: session } = useSession();
+
   return (
     <Layout>
       <div className={styles.pageHeader}>
@@ -63,8 +81,62 @@ export default function Mileage() {
           </div>
         </div>
 
-        {/* Buttons! */}
-        <MileageButtons />
+        {/* Logged in : Options */}
+        {session && (
+          <>
+            <div className={styles.btnContainer}>
+              <div className={styles.btnContent}>
+                <p className={styles.description}>Signed in through Strava as {session.user.name}</p>
+
+                <div className={styles.btnGrid}>
+
+                <button className={styles.btn} id={styles.btn1}>
+                  {csvData && (
+                      <CSVLink data={csvData} headers={headers}>
+                      Export CSV
+                      </CSVLink>
+                  )}
+                </button>
+
+                <button className={styles.btn} id={styles.btn2}>  {/*onClick={() => signIn()} className={styles.stravaBtn}> */}
+                  Connect to Google Sheets
+                </button>
+                
+                <button className={styles.btn} id={styles.btn2} onClick={() => signOut()}>
+                  Sign Out
+                </button>
+                </div>
+              </div>
+
+            </div>
+          </>
+        )}
+
+
+        {/* Not logged in : Prompt */}
+        { !session && (
+            <>
+              <div className={styles.btnContainer}>
+        
+                <div className={styles.btnContent}>
+        
+                  <p className={styles.description}>
+                    Please authorize Strava to use the aforementioned services!
+                  </p>
+        
+                  <button onClick={() => signIn()} className={styles.stravaBtn}>
+                    <Image
+                      src="/btn_strava_connectwith_orange.svg"
+                      alt="Connect with Strava"
+                      width={225}
+                      height={55}
+                    />
+                  </button>
+                </div>
+        
+              </div>
+            </>
+        )}
 
     </Layout>
   )

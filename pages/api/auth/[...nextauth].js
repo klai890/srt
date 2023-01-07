@@ -53,9 +53,9 @@ export default NextAuth({
         token.accessToken = account.access_token
         token.id = profile.id
       }
-      console.log(token);
-      console.log("ACCOUNT: " + account);
-      console.log("PROFILE: " + profile);
+      // console.log(token);
+      // console.log("ACCOUNT: " + account);
+      // console.log("PROFILE: " + profile);
       return token
     }  
   },
