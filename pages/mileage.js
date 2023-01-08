@@ -8,6 +8,7 @@ import { getToken } from "next-auth/jwt"
 import { formatData, headers } from '../lib/strava/api/mileage-csv';
 
 
+// https://stackoverflow.com/questions/65752932/internal-api-fetch-with-getserversideprops-next-js
 export async function getServerSideProps(context){
   const token = await getToken({req: context.req, secret: process.env.NEXTAUTH_SECRET});
   // console.log('SERVERSIDE PROPS TOKEN: ')
@@ -27,9 +28,6 @@ export async function getServerSideProps(context){
 
 /** @param {import('next').InferGetServerSidePropsType<typeof getServerSideProps> } props */
 export default function Mileage({ csvData }) {
-
-  console.log("CSV DATA: ")
-  console.log(csvData);
 
   const { data: session } = useSession();
 
@@ -90,13 +88,16 @@ export default function Mileage({ csvData }) {
 
                 <div className={styles.btnGrid}>
 
-                <button className={styles.btn} id={styles.btn1}>
                   {csvData && (
-                      <CSVLink data={csvData} headers={headers}>
-                      Export CSV
+                      <CSVLink 
+                        data={csvData} 
+                        headers={headers}
+                        filename={"mileage.csv"}
+                        className={styles.btn}
+                      >
+                        Export Mileage as CSV
                       </CSVLink>
                   )}
-                </button>
 
                 <button className={styles.btn} id={styles.btn2}>  {/*onClick={() => signIn()} className={styles.stravaBtn}> */}
                   Connect to Google Sheets

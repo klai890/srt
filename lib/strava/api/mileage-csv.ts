@@ -6,8 +6,10 @@
 
 import ActivityWeek from '../models/ActivityWeek';
 import SummaryActivity from '../models/SummaryActivity';
-import {getActivities} from './strava';
+import Activity from "../models/Activity";
+import { getAccessToken } from "./Authorization";
 
+const PER_PAGE = 200; // # activities per page
 
 // Temporarily set it to my own account. TODO: Set up the /mileage -> /api/activities
 // redirect to retrieve the USER_ID from the request.
@@ -26,71 +28,128 @@ export var headers = [
 
 export const formatData = async function(userId) {
     
-    // <----------------------- API CALL -------------------------->
-    var allRuns : Array<SummaryActivity> = await getActivities(userId)
+    // <------------------------- RETRIEVE CREDENTIALS ---------------------------->
+    const ATHLETES_ENDPOINT = `https://www.strava.com/api/v3/athletes/${userId}`;
+    const { access_token: accessToken } = await getAccessToken();
 
-    console.log("ALL RUNS: ")
-    console.log(allRuns);
+    // for parameter reference: https://developers.strava.com/docs/reference/#api-Activities-getLoggedInAthleteActivities
+    // can prob do some parameter manipulaiton & loops to get desired outcome
+    
+    // epoch: https://www.epochconverter.com/
+    // max per page seems to be 200
+    
+    // <------------------------- RETRIEVE ACTIVITY DATA ------------------------------------>
 
-    // <----------------------- INIT DATA ------------------------>
+    var i = 1;
+    var pageJson : Array<SummaryActivity> = [];
     var csvTable : Array<ActivityWeek> = [];
+    var response : Response = await fetch(
+        `${ATHLETES_ENDPOINT}/activities?access_token=${accessToken}&page=${i}&per_page=${PER_PAGE}`
+    );
+    var json = await response.json();
+    
+    // Loop to retrieve ALL data. Uncomment at your own risk!!
+    while (json.length != 0) {
+        pageJson = prettify(json);
+        // console.log(pageJson);
+        // console.log('json, json.length');
+        // console.log(json);
+        // console.log(json.length);
 
-    // <---------------------- ADD TO CSV DATA ---------------------->
-    while (allRuns.length != 0) {
-        // console.log("ALL RUNS: ");
-        // allRuns.forEach(item => console.log(item))
-        var lastDate : Date = new Date(allRuns[0].start_date); // may need Date.parse
-        var prevSun : Date = prevSunday(lastDate);
-        var prevMon : Date = monday(prevSun);
+        // <--------------------- ADD DATA --------------------------------------->
+        csvTable = addData(pageJson, csvTable);
+        // console.log("--------- CSV TABLE MID PROCESS ----------");
+        // console.log(csvTable)
 
-        // Grab everything after prevSun
-        var week : ActivityWeek = {
-            'week': prevMon.toLocaleDateString() + " Monday", // ex: 1/6/2023
-            'monday': 0,
-            'tuesday': 0,
-            'wednesday': 0,
-            'thursday': 0,
-            'friday': 0,
-            'saturday': 0,
-            'sunday': 0,
-            'mileage': 0
-        }
+        i++;
 
-        // d1 > d2 if d1 occurs at a later time than d2 
-        // https://stackabuse.com/compare-two-dates-in-javascript/
-        while ( lastDate > prevSun && allRuns.length != 0 ) {
-            let run = allRuns.shift();
-            let day = activityWeekKey(new Date(run.start_date));
-            var miles =  0.000621371192 * run.distance; // meters to miles
-            week[day] += miles;
-            week['mileage'] += miles;
-            lastDate = new Date(run.start_date);
-        }
-
-        // console.log(lastDate + " WAS LESS THAN " + prevSun);
-
-        // round everything to 2 decimals
-        week['monday'] = roundTwo(week['monday']);
-        week['tuesday'] = roundTwo(week['tuesday']);
-        week['wednesday'] = roundTwo(week['wednesday']);
-        week['thursday'] = roundTwo(week['thursday']);
-        week['friday'] = roundTwo(week['friday']);
-        week['saturday'] = roundTwo(week['saturday']);
-        week['sunday'] = roundTwo(week['sunday']);
-        week['mileage'] = roundTwo(week['mileage']);
-
-        csvTable.push(week);
+        response = await fetch(
+            `${ATHLETES_ENDPOINT}/activities?access_token=${accessToken}&page=${i}&per_page=${PER_PAGE}`
+        );
+        json = await response.json();
     }
 
-    // console.log("CSV TABLE: ")
-    // csvTable.forEach(obj => console.log(obj));
-
-    return csvTable;
-
+    console.log("<-------------------------CSV TABLE------------------------->")
+    csvTable.forEach(obj => console.log(obj));
+    return csvTable.reverse();
 }
 
-
 // <--------------------- HELPER FUNCTIONS ----------------------->
+
+// TODO: case api calls split the week?
+function addData(json : Array<SummaryActivity>, csvTable : Array<ActivityWeek>) : Array<ActivityWeek>{
+
+    // <---------------------- ADD TO CSV DATA ---------------------->
+    // pop from existing data, add to csvTable
+    while (json.length != 0) {
+        // console.log("RETRIEVED DATA: ");
+        // json.forEach(item => console.log(item))
+        var date : Date = new Date(json[0].start_date); // may need Date.parse
+        var prevSun : Date = prevSunday(date);
+        var prevMon : Date = monday(prevSun);
+
+        let run = json.shift();
+        let day = activityWeekKey(new Date(run.start_date));
+        
+        // see if week of prevMon exists. if so, add to there
+        // if csvTable includes obj that represents week prevMon:
+        //  add run mileage to that week
+        var week : ActivityWeek = csvTable.find(item => item.week === prevMon.toLocaleDateString());
+        
+        // if not in csvTable, create a new week for prevMon and add to it.
+        if (week === undefined){
+            week = {
+                'week': prevMon.toLocaleDateString(), // ex: 1/6/2023
+                'monday': 0,
+                'tuesday': 0,
+                'wednesday': 0,
+                'thursday': 0,
+                'friday': 0,
+                'saturday': 0,
+                'sunday': 0,
+                'mileage': 0
+            }
+            csvTable.push(week); // should update obj in orig func, if like Java.
+        }
+
+        week[day] += run.distance;
+        week['mileage'] += run.distance;
+        week[day] = roundTwo(week[day]);
+        week['mileage'] = roundTwo(week['mileage']);
+        
+    }
+
+    return csvTable;
+    
+}
+
+/**
+ * 
+ * @param json : Data retrieved from Strava
+ * @returns array of SummaryActivity : A condensed version
+ */
+function prettify (json: Array<Activity>) : Array<SummaryActivity> {
+
+    // FLAG: look into JQ
+    // https://stackoverflow.com/questions/29815940/javascript-implementation-of-jq
+
+    // first, get only running activities
+    json = json.filter ( activity => activity.type == 'Run');
+  
+    // second, grab only essential data
+    var condensedJson = json.map ( activity => {
+        // var date : Date = new Date(activity.start_date_local);
+        var miles : number = 0.000621371192 * activity.distance; // meters to miles
+        return ({
+            name: activity.name,
+            distance: roundTwo(miles),
+            type: activity.type,
+            start_date: activity.start_date_local
+        })
+    })
+  
+    return condensedJson;
+  }  
 
 /**
  * Date Docs: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date
@@ -121,8 +180,8 @@ function prevSunday(date: Date) : Date {
 function monday(prevSunday: Date) : Date {
     var day = prevSunday.getDay()
     var mon = new Date(prevSunday.getTime());
-    var diff = day; // # days to sunday
-    mon.setDate(prevSunday.getDate() - diff);
+    var diff = 1; // # days to monday
+    mon.setDate(prevSunday.getDate() + diff);
 
     // 11:59pm
     mon.setHours(23);

@@ -52,30 +52,31 @@ export const getActivities = async (userId) => {
 
   // <------------------------- RETRIEVE ALL RUNS ------------------------------------>
   
-  const PER_PAGE = 50;
+  const PER_PAGE = 200;
 
-  var response = await fetch(
-      `${ATHLETES_ENDPOINT}/activities?access_token=${accessToken}&page=1&per_page=${PER_PAGE}`
-  );
+  // var response = await fetch(
+  //     `${ATHLETES_ENDPOINT}/activities?access_token=${accessToken}&page=1&per_page=${PER_PAGE}`
+  // );
   
-  var allRuns : Array<SummaryActivity> = prettify(await response.json());
-  
-  
-    var i = 2;
-    var json : Array<SummaryActivity>;
-    var pageJson : Array<SummaryActivity>;
+    var allRuns : Array<SummaryActivity> = []  
+    var i = 1;
+    var pageJson : Array<SummaryActivity> = [];
   
   // Loop to retrieve ALL data. Uncomment at your own risk!!
-//   while (response) {
-//     pageJson = prettify(await response.json());
-//     if (json) json.concat(pageJson);
-//     else json = pageJson;
-//     console.log(json);
-//     response = await fetch(
-//         `${ATHLETES_ENDPOINT}/activities?access_token=${accessToken}&page=${i}&per_page=200`
-//     );
-//     i++;
-//   }
+  while (i < 4) {
+    var response = await fetch(
+        `${ATHLETES_ENDPOINT}/activities?access_token=${accessToken}&page=${i}&per_page=${PER_PAGE}`
+    );
+    pageJson = prettify(await response.json());
+    allRuns = allRuns.concat(pageJson);
+    
+    console.log("pageJSON");
+    console.log(pageJson);
+    i++;
+  }
+
+  console.log("RUNS")
+  console.log(allRuns);
 
   return allRuns;
 
