@@ -23,7 +23,7 @@
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx"
-, "lib/strava/api/mileage-csv.ts", "lib/strava/api/mileage-csv.ts"  ],
+, "lib/strava/api/mileage-csv.ts", "lib/strava/api/mileage-csv.ts", "lib/strava/api/Authorization.Js"  ],
   "exclude": [
     "node_modules"
   ]

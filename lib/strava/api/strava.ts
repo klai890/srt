@@ -8,7 +8,7 @@
 
 import Activity from "../models/Activity";
 import SummaryActivity from "../models/SummaryActivity";
-import { getAccessToken } from "./Authorization";
+import { getAccessToken } from "./Authorization.Js";
 
 /**
  * 
@@ -63,7 +63,7 @@ export const getActivities = async (userId) => {
     var pageJson : Array<SummaryActivity> = [];
   
   // Loop to retrieve ALL data. Uncomment at your own risk!!
-  while (i < 4) {
+  while (i < 3) {
     var response = await fetch(
         `${ATHLETES_ENDPOINT}/activities?access_token=${accessToken}&page=${i}&per_page=${PER_PAGE}`
     );

@@ -10,15 +10,15 @@ import StravaProvider from "next-auth/providers/strava"
 // import { PrismaAdapter } from "@next-auth/prisma-adapter"
 // import prisma from "../../../lib/prismadb.ts"
 
-export default NextAuth({
+export const authOptions = {
   // adapter: PrismaAdapter(prisma),
   providers: [
     StravaProvider({
       clientId: process.env.STRAVA_ID,
       clientSecret: process.env.STRAVA_SECRET,
       authorization: {
-        url: 'https://www.strava.com/oauth/authorize',
-        scope: 'activity:read,activity:write'
+        url: 'https://www.strava.com/oauth/authorize?',
+        params : {scope: 'activity:read,activity:read_all,activity:write'}
       }
     }),
   ],
@@ -50,18 +50,42 @@ export default NextAuth({
     async jwt({ token, account, profile }) {
       // Persist the OAuth access_token and or the user id to the token right after signin
       if (account) {
+        console.log('------------------------------account---------------------------')
+        console.log(account);
+        console.log("REAL REFRESH TOKEN: ")
+        console.log(account.refresh_token);
         token.accessToken = account.access_token
+        token.refreshToken = account.refresh_token
         token.id = profile.id
       }
-      // console.log(token);
-      // console.log("ACCOUNT: " + account);
-      // console.log("PROFILE: " + profile);
+
+      console.log("TOKEN")
+      console.log(token);
+
+      console.log("ACCOUNT")
+      console.log(account)
+
+      console.log('PROFILE'); console.log(profile);
       return token
-    }  
+    },
+
+    async session({ session, token }) {
+
+      console.log('SESSION.USER'); console.log(token.name)
+      session.user = token.name
+      session.accessToken = token.accessToken
+      session.refreshToken = token.refreshToken
+      session.error = token.error
+
+      return session
+    },
+
   },
 
   token: {
     url: "https://www.strava.com/oauth/token",
     params: { scope: "activity:read" }
   }
-})
+}
+
+export default NextAuth(authOptions)

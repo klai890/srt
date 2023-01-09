@@ -6,21 +6,45 @@ import { useSession, signIn, signOut } from "next-auth/react"
 import {CSVLink, CSVDownload} from 'react-csv';
 import { getToken } from "next-auth/jwt"
 import { formatData, headers } from '../lib/strava/api/mileage-csv';
+import { authOptions } from './api/auth/[...nextauth].js'
+import { unstable_getServerSession } from "next-auth/next"
+// import { authenticate } from '../lib/strava/api/Authorization.js'
 
 
 // https://stackoverflow.com/questions/65752932/internal-api-fetch-with-getserversideprops-next-js
 export async function getServerSideProps(context){
+  const session = await unstable_getServerSession(context.req, context.res, authOptions)
+  // console.log("SESSION: ")
+  // console.log(session);
   const token = await getToken({req: context.req, secret: process.env.NEXTAUTH_SECRET});
-  // console.log('SERVERSIDE PROPS TOKEN: ')
-  // console.log(token);
-  const data = await formatData(token.id);
-  
-  // console.log("SERVERSIDE PROPS DATA: ")
-  // console.log(data);
 
-  return {
+  // console.log('TOKEN:')
+  // console.log(token);
+
+  if (token){
+
+    console.log("PASSED REFRESH TOKEN:")
+    console.log(session.refreshToken);
+    const data = await formatData({
+      userId: token.id, 
+      oldAccessToken: session.accessToken, 
+      refreshToken: session.refreshToken
+    });
+    
+    // console.log("SERVERSIDE PROPS DATA: ")
+    // console.log(data);
+    
+    return {
+      props: {
+        csvData : data
+      }
+    }
+  }
+
+  else 
+  return { 
     props: {
-      csvData : data
+      csvData: null
     }
   }
 }
@@ -84,7 +108,7 @@ export default function Mileage({ csvData }) {
           <>
             <div className={styles.btnContainer}>
               <div className={styles.btnContent}>
-                <p className={styles.description}>Signed in through Strava as {session.user.name}</p>
+                <p className={styles.description}>Signed in through Strava as {session.user}</p>
 
                 <div className={styles.btnGrid}>
 
