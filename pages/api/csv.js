@@ -4,20 +4,7 @@
 
 // This is an example of how to read a JSON Web Token from an API route
 import { getToken } from "next-auth/jwt"
-import { getActivities } from '../../lib/strava/api/strava';
-
-
-// import type { NextApiRequest, NextApiResponse } from "next"
-
-// export default async function handler(
-//   req: NextApiRequest,
-//   res: NextApiResponse
-// ) {
-//   // If you don't have the NEXTAUTH_SECRET environment variable set,
-//   // you will have to pass your secret as `secret` to `getToken`
-//   const token = await getToken({ req })
-//   res.send(JSON.stringify(token, null, 2))
-
+import { formatData, headers } from '../../lib/strava/api/mileage-csv';
 
 /**  --------------------- CREATE STRAVA API -------------------- */
 
@@ -35,9 +22,21 @@ var activitiesApi = new StravaApiV3.ActivitiesApi();
 /* ----------------------- MAKE STRAVA API CALL --------------------- */
 export default async function handler(req, res) {
   const token = await getToken({req, secret: process.env.NEXTAUTH_SECRET});
-  const activities = await getActivities(token.id);
+
+  // console.log("TOKEN: ");
+  // console.log(token);
+  if (token) {
+    const data = await formatData(token.id);
+  
+    // console.log("DATA: " + data)
+    res.send(JSON.stringify(data, null, 2))
+  }
+
+  else {
+    res.status(401).send("");
+  }
 
   /* Display JSON Token to screen */
-  res.send(JSON.stringify(activities, null, 2))
+//   res.send(JSON.stringify(data, null, 2))
   // res.send(JSON.stringify(token, null, 2))
 };
