@@ -23,12 +23,12 @@ var activitiesApi = new StravaApiV3.ActivitiesApi();
 export default async function handler(req, res) {
   const token = await getToken({req, secret: process.env.NEXTAUTH_SECRET});
 
-  console.log("TOKEN: ");
-  console.log(token);
+  // console.log("TOKEN: ");
+  // console.log(token);
   if (token) {
     const data = await formatData(token.id);
   
-    console.log("DATA: " + data)
+    // console.log("DATA: " + data)
     res.send(JSON.stringify(data, null, 2))
   }
 

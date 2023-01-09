@@ -7,7 +7,6 @@
 import ActivityWeek from '../models/ActivityWeek';
 import SummaryActivity from '../models/SummaryActivity';
 import Activity from "../models/Activity";
-import { getAccessToken } from "./Authorization.Js";
 
 const PER_PAGE = 200; // # activities per page
 
@@ -26,12 +25,11 @@ export var headers = [
     {label: 'Mileage', key: 'mileage'}
 ]
 
-export const formatData = async function({userId, oldAccessToken, refreshToken}) {
+export const formatData = async function({userId, accessToken, refreshToken}) {
     
     // <------------------------- RETRIEVE CREDENTIALS ---------------------------->
-    // console.log(userId); console.log(oldAccessToken); console.log(refreshToken);
+    // console.log(userId); console.log(accessToken); console.log(refreshToken);
     const ATHLETES_ENDPOINT = `https://www.strava.com/api/v3/athletes/${userId}`;
-    const accessToken = oldAccessToken; //await getAccessToken(oldAccessToken, refreshToken);
 
     // for parameter reference: https://developers.strava.com/docs/reference/#api-Activities-getLoggedInAthleteActivities
     // can prob do some parameter manipulaiton & loops to get desired outcome
@@ -48,7 +46,7 @@ export const formatData = async function({userId, oldAccessToken, refreshToken})
         `${ATHLETES_ENDPOINT}/activities?access_token=${accessToken}&page=${i}&per_page=${PER_PAGE}`
     );
     var json = await response.json();
-    console.log(json);
+    // console.log(json);
     
     // Loop to retrieve ALL data. Uncomment at your own risk!!
     while (json.length != 0) {
@@ -71,8 +69,8 @@ export const formatData = async function({userId, oldAccessToken, refreshToken})
         json = await response.json();
     }
 
-    console.log("<-------------------------CSV TABLE------------------------->")
-    csvTable.forEach(obj => console.log(obj));
+    // console.log("<-------------------------CSV TABLE------------------------->")
+    // csvTable.forEach(obj => console.log(obj));
     return csvTable.reverse();
 }
 

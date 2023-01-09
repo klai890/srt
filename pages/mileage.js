@@ -23,11 +23,11 @@ export async function getServerSideProps(context){
 
   if (token){
 
-    console.log("PASSED REFRESH TOKEN:")
-    console.log(session.refreshToken);
+    // console.log("PASSED REFRESH TOKEN:")
+    // console.log(session.refreshToken);
     const data = await formatData({
       userId: token.id, 
-      oldAccessToken: session.accessToken, 
+      accessToken: session.accessToken, 
       refreshToken: session.refreshToken
     });
     

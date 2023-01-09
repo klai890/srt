@@ -49,29 +49,36 @@ export const authOptions = {
   callbacks: {
     async jwt({ token, account, profile }) {
       // Persist the OAuth access_token and or the user id to the token right after signin
+      
+      // Initial Sign in
       if (account) {
-        console.log('------------------------------account---------------------------')
-        console.log(account);
-        console.log("REAL REFRESH TOKEN: ")
-        console.log(account.refresh_token);
+        // console.log('------------------------------account---------------------------'); console.log(account);
+        // console.log("REAL REFRESH TOKEN: "); console.log(account.refresh_token);
         token.accessToken = account.access_token
         token.refreshToken = account.refresh_token
         token.id = profile.id
+        return token;
       }
 
-      console.log("TOKEN")
-      console.log(token);
+      // Return previous token if the access token has not expired yet
+      if (Date.now() < token.accessTokenExpires) {
+        return token;
+      }
 
-      console.log("ACCOUNT")
-      console.log(account)
 
-      console.log('PROFILE'); console.log(profile);
-      return token
+      // console.log("TOKEN"); console.log(token);
+      // console.log("ACCOUNT"); console.log(account)
+      // console.log('PROFILE'); console.log(profile);
+
+      // Access token has expired, try to update it
+      var newToken = await refreshAccessToken(token);
+      // console.log('NEW TOKEN: '); console.log(newToken);
+      return newToken;
     },
 
     async session({ session, token }) {
 
-      console.log('SESSION.USER'); console.log(token.name)
+      // console.log('SESSION TOKEN'); console.log(token);
       session.user = token.name
       session.accessToken = token.accessToken
       session.refreshToken = token.refreshToken
@@ -81,11 +88,52 @@ export const authOptions = {
     },
 
   },
+}
 
-  token: {
-    url: "https://www.strava.com/oauth/token",
-    params: { scope: "activity:read" }
+async function refreshAccessToken(token) {
+  console.log('refreshing')
+  try {
+    const url =
+      "https://www.strava.com/oauth/token?" +
+      new URLSearchParams({
+        client_id: process.env.STRAVA_ID,
+        client_secret: process.env.STRAVA_SECRET,
+        refresh_token: token.refreshToken,
+        grant_type: "refresh_token",
+        redirect_uri: "http://localhost:3000/mileage"
+      })
+      
+
+    const response = await fetch(url, {
+      headers: {
+        Accept: "application/json, text/plain, */*",
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+    })
+
+    const refreshedTokens = await response.json()
+
+    if (!response.ok) {
+      throw refreshedTokens
+    }
+
+    return {
+      ...token,
+      accessToken: refreshedTokens.access_token,
+      accessTokenExpires: Date.now() + refreshedTokens.expires_at * 1000,
+      refreshToken: refreshedTokens.refresh_token ?? token.refreshToken, // Fall back to old refresh token
+    }
+  } catch (error) {
+    console.log(error)
+
+    return {
+      ...token,
+      error: "RefreshAccessTokenError",
+    }
   }
 }
+
+
 
 export default NextAuth(authOptions)

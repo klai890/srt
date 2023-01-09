@@ -8,7 +8,7 @@
 
 import Activity from "../models/Activity";
 import SummaryActivity from "../models/SummaryActivity";
-import { getAccessToken } from "./Authorization.Js";
+import { getAccessToken } from "./Authorization.js";
 
 /**
  * 
