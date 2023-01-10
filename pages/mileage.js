@@ -14,6 +14,7 @@ import { unstable_getServerSession } from "next-auth/next"
 // https://stackoverflow.com/questions/65752932/internal-api-fetch-with-getserversideprops-next-js
 export async function getServerSideProps(context){
   const session = await unstable_getServerSession(context.req, context.res, authOptions)
+
   // console.log("SESSION: ")
   // console.log(session);
   const token = await getToken({req: context.req, secret: process.env.NEXTAUTH_SECRET});
@@ -54,6 +55,7 @@ export async function getServerSideProps(context){
 export default function Mileage({ csvData }) {
 
   const { data: session } = useSession();
+  const gsheets_loggedin = false;
 
   return (
     <Layout>
@@ -103,48 +105,64 @@ export default function Mileage({ csvData }) {
           </div>
         </div>
 
+        <div className={styles.btnContainer}>
+          <div className={styles.btnContent}>
+
         {/* Logged in : Options */}
         {session && (
           <>
-            <div className={styles.btnContainer}>
-              <div className={styles.btnContent}>
                 <p className={styles.description}>Signed in through Strava as {session.user}</p>
 
                 <div className={styles.btnGrid}>
 
-                  {csvData && (
-                      <CSVLink 
-                        data={csvData} 
-                        headers={headers}
-                        filename={"mileage.csv"}
-                        className={styles.btn}
-                      >
-                        Export Mileage as CSV
-                      </CSVLink>
-                  )}
-
-                <button className={styles.btn} id={styles.btn2}>  {/*onClick={() => signIn()} className={styles.stravaBtn}> */}
-                  Connect to Google Sheets
-                </button>
+                    {csvData && (
+                        <CSVLink 
+                          data={csvData} 
+                          headers={headers}
+                          filename={"mileage.csv"}
+                          className={styles.btn}
+                        >
+                          Export Mileage as CSV
+                        </CSVLink>
+                    )}
                 
-                <button className={styles.btn} id={styles.btn2} onClick={() => signOut()}>
-                  Sign Out
-                </button>
-                </div>
-              </div>
+                
+                {/* GSheets logged in */}
+                { gsheets_loggedin && (
+                  <>
+                    <button className={styles.btn} id={styles.btn2}> Export Mileage to Google Sheets </button>
+                    <div>
+                      <p className={styles.description}>
+                        Or if you want autoupdates, click the button below.
+                        This also creates a new sheet, but automatically updates it
+                        with new information from Strava.
+                      </p>                    
+                      <button className={styles.btn} id={styles.btn2}> Automatic Update Google Sheets </button>
+                    </div>
+                  </>
+                )}
 
-            </div>
+                {/* Gsheets not logged in */}
+                { !gsheets_loggedin && (
+                <>
+                  <button className={styles.btn} id={styles.btn2}>
+                    Connect to Google Sheets
+                  </button>
+                  
+                </>)}
+
+                <button className={styles.btn} id={styles.btn2} onClick={() => signOut()}>
+                  Sign Out of Strava
+                </button>
+              </div>
           </>
         )}
 
 
+
         {/* Not logged in : Prompt */}
         { !session && (
-            <>
-              <div className={styles.btnContainer}>
-        
-                <div className={styles.btnContent}>
-        
+            <>        
                   <p className={styles.description}>
                     Please authorize Strava to use the aforementioned services!
                   </p>
@@ -157,11 +175,11 @@ export default function Mileage({ csvData }) {
                       height={55}
                     />
                   </button>
-                </div>
-        
-              </div>
             </>
         )}
+
+        </div>
+      </div>
 
     </Layout>
   )
