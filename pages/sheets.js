@@ -1,7 +1,7 @@
 // import { google } from 'googleapis';
 import { redirect } from 'next/dist/server/api-utils';
 import Link from 'next/link';
-// https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets
+
 
 function getGoogleUrl(){
   const scopes = [
@@ -28,6 +28,59 @@ function getGoogleUrl(){
 }
 
 export async function getServerSideProps(context) {
+
+//  const authUrl = getUrl();
+
+  // fetch(authUrl, {
+  //   method: 'GET'
+  // })
+  //   .then(res => {
+  //     console.log('MADE IT TO THE THENS!!')
+  //     if (res.ok) {
+  //       console.log('SUCCESS')
+  //       return res;
+  //     }
+  //     else {
+  //       console.log('NOT SUCCESSFUL')
+  //     }
+  //   })
+  //   .then( data => console.log(data) )
+  //   .catch ( error => console.log('ERROR: ' + error))
+  
+  // const sheets = google.sheets({ version: 'v4', auth });
+
+  // const response = await sheets.spreadsheets.values.get({
+  //   spreadsheetId: process.env.SHEET_ID,
+  //   range: 'Sheet1!A2:A4',
+  // });
+
+  // const posts = response.data.values.flat();
+  // console.log(posts);
+
+  // Create a Spreadsheet
+
+  // const resource = {
+  //   properties: {
+  //     title: 'Test Spreadsheet!',
+  //   }
+  // }
+
+  // try {
+  //   const spreadsheet = await sheets.spreadsheets.create({
+  //     resource,
+  //     fields: 'spreadsheetId',
+  //   });
+
+  //   console.log(`Spreadsheet ID: ${spreadsheet.data.spreadsheetId}`);
+  //   console.log(spreadsheet);
+
+  // } catch (err) {
+  //   // TODO (developer) - Handle exception
+  //   console.log('ERROR: ')
+  //   console.log(error)
+  // }
+  
+
 
   return {
     props: {
