@@ -131,7 +131,7 @@ export default function Mileage({ csvData }) {
     form.setAttribute('action', oauth2Endpoint);
    
     // Parameters to pass to OAuth 2.0 endpoint.
-    var params = {'client_id': '946470171720-3stkt8fdsuho3lrduc4834t8lk0tp2et.apps.googleusercontent.com',
+    var params = {'client_id': '946470171720-3stkt8fdsuho3lrduc4834t8lk0tp2et.apps.googleusercontent.com    ',
                   'redirect_uri': 'http://localhost:3000/sheets',
                   'response_type': 'token',
                   'scope':'https://www.googleapis.com/auth/userinfo.profile',

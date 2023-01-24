@@ -17,12 +17,14 @@ function Login(req: NextApiRequest, res: NextApiResponse) {
         return;
     }
 
-    const {username, password} = req.body;
+    const {access_token, token_type, expires_in, scope} = req.body;
 
     // Create JWT Token
     const jwtToken = jwt.sign({
-        username,
-        admin: username=='admin' && password=='admin',
+        access_token,
+        token_type,
+        expires_in,
+        scope
     }, KEY)
 
     // Response

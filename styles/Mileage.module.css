@@ -62,6 +62,15 @@
     border-color: #fc4c02;
 }
 
+.googleBtn {
+    border: None;
+    background: None;
+}
+
+.googleBtn:hover{
+    cursor: pointer;
+}
+
 @media screen and (max-width: 700px){
     .gallery {
         grid-template-columns: 1fr;
