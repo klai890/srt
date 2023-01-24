@@ -6,12 +6,12 @@ import { useRouter, NextRouter } from 'next/router'
 import React from 'react'
 import jwt from 'jsonwebtoken';
 import cookieCutter from 'cookie-cutter'
-import {CSVLink, CSVDownload} from 'react-csv';
 import { formatData, headers } from '../lib/strava/api/mileage-csv';
 import parsePath from '../utils/parsePath';
 
 // TODO: 
-// * Define signOut()
+// * Store Token data in the session (or another variable)?
+// * Refresh token?
 // * Define signIn() for Strava (two separate sign in funcitons for Sheets and Strava)
 // * Extract CSV Data from sign in Strava
 // * Extract CSV Data into Google Sheets
@@ -24,13 +24,65 @@ const SHEETS_COOKIE = 'sheets-token';
 const KEY = 'TUxj90CG5oOqMDOwPI378k1LYTAJtVTvZ_qUZECqyxdbYw3US1PAW3wqZy4FXgraACn7zbM7fPZFHcUoBtb-VA';
 
 
+interface GoogleUser {
+  family_name: string,
+  name: string,
+  picture: string,
+  locale: string,
+  given_name: string,
+  id: string
+}
+
 /**
  * The component!
  */
 function Sheets() {
 
   const router =  useRouter();
+
+  // Maybe instead of storing session as a boolean, store it as the
+  // {access_token, token_type, expires_in, scope} format (make an interface)
+  // So I can access it in the methods.
   const [session, setSession] = useState<boolean>(false);
+  const [googleInfo, setGoogleInfo] = useState<GoogleUser>(null);
+
+
+  const googleProfile = async () => {
+    // FETCH https://www.googleapis.com/oauth2/v1/userinfo?alt=json
+    // Add access token to the authorization header of the request
+
+    const google_profile_endpoint = 'https://www.googleapis.com/oauth2/v1/userinfo?alt=json';
+    const jwt_token = cookieCutter.get(SHEETS_COOKIE);
+    
+    // FETCH /api/token (retrieve access token)
+    const token_res = await fetch('/api/token', {
+      method: 'POST',
+      headers: {
+        // Make sure backend knows we're sending JSON data!!
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({jwt_token})
+    }).then(t => t.json())
+    
+    var access_token;
+
+    if (token_res.access_token) access_token = token_res.access_token;
+
+
+    // FETCH https://www.googleapis.com/oauth2/v1/userinfo?alt=json (user info)
+    const res: GoogleUser = await fetch(google_profile_endpoint, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${access_token}`
+      }
+    }).then(t => t.json())
+
+    console.log("<-------------------- THE RESPONSE ------------------------------>");
+    console.log(res);
+
+    setGoogleInfo(res);
+
+  }
 
   /**
    * Links to OAuth to authorize Google
@@ -48,7 +100,8 @@ function Sheets() {
       var params = {'client_id': '946470171720-3stkt8fdsuho3lrduc4834t8lk0tp2et.apps.googleusercontent.com',
                     'redirect_uri': 'http://localhost:3000/sheets',
                     'response_type': 'token',
-                    'scope':'https://www.googleapis.com/auth/userinfo.profile',
+                    // Google API: Separate with a space
+                    'scope':'https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/spreadsheets',
                     'include_granted_scopes': 'true',
                     'state': 'pass-through value'};
     
@@ -88,7 +141,6 @@ function Sheets() {
     console.log('<----------------------- PARAMS ------------------------->');
     console.log(params);
     
-    
     // 2. Use params to create a JWT token
     
     // Make FETCH request to get a JWT token
@@ -97,7 +149,8 @@ function Sheets() {
       const token_type = params.token_type;
       const expires_in = params.expires_in;
       const scope = params.scope;
-
+      
+      // FETCH /api/login (create JWT token)
       const res = await fetch('/api/login', {
         method: 'POST',
         headers: {
@@ -108,11 +161,10 @@ function Sheets() {
       }).then(t => t.json())
 
       const token = res.token;
-      console.log("<--------------------------------- TOKEN ----------------------------------->");
-      console.log(token);
       
-
       if (token) {
+        console.log("<------------------------------ JWT TOKEN ---------------------->")
+        console.log(token);
         const json = jwt.decode(token) as {[key:string]: string}
   
         // Set Cookies
@@ -120,36 +172,32 @@ function Sheets() {
         console.log(json);
       }
 
-      // const jwtToken : string = jwt.sign({
-      //   'access_token': access_token,
-      //   'token_type': token_type,
-      //   'expires_in': expires_in,
-      //   'scope': scope
-      // }, KEY)
-
-      // console.log("<------------------------------ JWT TOKEN ---------------------->")
-      // console.log(jwtToken);
     }
 
     // 3. Store JWT token in Local Storage as a cookie
     console.log("<------------------ GET SHEETS COOKIE ------------------>");
     console.log(cookieCutter.get(SHEETS_COOKIE))
-
   }
 
   /**
    * Checks to see if the cookie is valid.
+   * TODO: CHECK expiration date, add refresh token
    */
   function isValidCookie(): boolean {
-    if (cookieCutter.get(SHEETS_COOKIE)) return true;
+    if (cookieCutter.get(SHEETS_COOKIE) && cookieCutter.get(SHEETS_COOKIE).length != 0) return true;
     return false;
   }
 
   /**
-   * Signs out
+   * Signs out a user from Google
    */
   function signOut() {
     // Remove cookie
+    cookieCutter.set(SHEETS_COOKIE, '');
+
+    // Issue: After removed, we need to update!
+    // Use a REACT hook to update!
+    setSession(false);
   }
 
   /**
@@ -157,31 +205,31 @@ function Sheets() {
    * Store JWT token in session, setSession
    */
   useEffect(() => {
-    console.log('<------------------ USE EFFECT --------------------->')
     storeTokens();
 
     // Verify Cookies.
     var isValid = isValidCookie();
     setSession(isValid);
+
+    // Get info
+    if (session && googleInfo == null) googleProfile();
   })
 
   return (
     <Layout>
       
       <div className={styles.pageHeader}>
-        <h1 className={styles.h2}>Strava, I want a mileage log!</h1>
+        <h1 className={styles.h2}>Strava, I want a mileage log because I'm a mileage hog!</h1>
         <p> Track runs on Strava to automatically update a mileage log on Google Sheets! </p>
       </div>
-
-      <h1>Logged In: {session + ""}</h1>
 
         <div className={styles.btnContainer}>
           <div className={styles.btnContent}>
 
         {/* Logged in : Options */}
-        {session && (
+        {session && googleInfo &&(
           <>
-                <p className={styles.description}>Signed in through Google Sheets as</p>
+                <p className={styles.description}>Signed in through Google Sheets as {googleInfo.name}</p>
 
                 <div className={styles.btnGrid}>
 
@@ -213,7 +261,7 @@ function Sheets() {
                   <button onClick={() => signIn()} className={styles.googleBtn}>
                     <Image
                       src="/btn_google_signin_dark_focus_web.png"
-                      alt="Connect with Strava"
+                      alt="Connect with Google Sheets"
                       width={382}
                       height={92}
                     />
