@@ -97,8 +97,8 @@ function Sheets() {
       form.setAttribute('action', oauth2Endpoint);
     
       // Parameters to pass to OAuth 2.0 endpoint.
-      var params = {'client_id': '946470171720-3stkt8fdsuho3lrduc4834t8lk0tp2et.apps.googleusercontent.com',
-                    'redirect_uri': 'http://localhost:3000/sheets',
+      var params = {'client_id': process.env.NEXT_PUBLIC_GAPI_CLIENT_ID,
+                    'redirect_uri': process.env.NEXT_PUBLIC_GAPI_REDIRECT_URL,
                     'response_type': 'token',
                     // Google API: Separate with a space
                     'scope':'https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/spreadsheets',
