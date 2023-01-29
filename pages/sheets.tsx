@@ -26,7 +26,8 @@ import React from 'react'
 import jwt from 'jsonwebtoken';
 import cookieCutter from 'cookie-cutter'
 import { formatData, headers } from '../lib/strava/api/mileage-csv';
-import parsePath from '../utils/parsePath';
+import parseGooglePath from '../utils/parseGooglePath';
+import type {GoogleUser, GoogleParams} from '../typings';
 
 // TODO: 
 // * Store Token data in the session (or another variable)?
@@ -41,17 +42,6 @@ const SHEETS_COOKIE = 'sheets-token';
 
 // JWT Key
 const KEY = 'TUxj90CG5oOqMDOwPI378k1LYTAJtVTvZ_qUZECqyxdbYw3US1PAW3wqZy4FXgraACn7zbM7fPZFHcUoBtb-VA';
-
-
-interface GoogleUser {
-  family_name: string,
-  name: string,
-  picture: string,
-  locale: string,
-  given_name: string,
-  id: string
-}
-
 /**
  * The component!
  */
@@ -155,7 +145,7 @@ function Sheets() {
 
     if (path === '/sheets') return;
 
-    const params = parsePath(path);
+    const params : GoogleParams = parseGooglePath(path);
 
     console.log('<----------------------- PARAMS ------------------------->');
     console.log(params);
@@ -164,10 +154,7 @@ function Sheets() {
     
     // Make FETCH request to get a JWT token
     if (params != null){
-      const access_token = params.access_token;
-      const token_type = params.token_type;
-      const expires_in = params.expires_in;
-      const scope = params.scope;
+      const {access_token, token_type, expires_in, scope} = params;
       
       // FETCH /api/login (create JWT token)
       const res = await fetch('/api/login', {
