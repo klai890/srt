@@ -55,7 +55,6 @@ export async function getServerSideProps(context){
 export default function Mileage({ csvData }) {
 
   const { data: session } = useSession();
-  const gsheets_loggedin = false;
 
   return (
     <Layout>
@@ -125,31 +124,6 @@ export default function Mileage({ csvData }) {
                           Export Mileage as CSV
                         </CSVLink>
                     )}
-                
-                
-                {/* GSheets logged in */}
-                { gsheets_loggedin && (
-                  <>
-                    <button className={styles.btn} id={styles.btn2}> Export Mileage to Google Sheets </button>
-                    <div>
-                      <p className={styles.description}>
-                        Or if you want autoupdates, click the button below.
-                        This also creates a new sheet, but automatically updates it
-                        with new information from Strava.
-                      </p>                    
-                      <button className={styles.btn} id={styles.btn2}> Automatic Update Google Sheets </button>
-                    </div>
-                  </>
-                )}
-
-                {/* Gsheets not logged in */}
-                { !gsheets_loggedin && (
-                <>
-                  <button className={styles.btn} id={styles.btn2}>
-                    Connect to Google Sheets
-                  </button>
-                  
-                </>)}
 
                 <button className={styles.btn} id={styles.btn2} onClick={() => signOut()}>
                   Sign Out of Strava

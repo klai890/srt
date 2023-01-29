@@ -5,13 +5,13 @@ const nextConfig = {
 
 module.exports = {
   reactStrictMode: true,
-  webpack: (config, options) => 
+  webpack: (config, {isServer}) => 
   { 
     config.module.rules.push(
     {  test: /\.js$/, parser: { amd: false } });
-
     // config.module.rules.push(
     // { resolve: {preferRelative: true}})
+  
     
     return config; 
   },

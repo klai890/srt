@@ -29,8 +29,6 @@ export const authOptions = {
       
       // Initial Sign in
       if (account) {
-        // console.log('------------------------------account---------------------------'); console.log(account);
-        // console.log("REAL REFRESH TOKEN: "); console.log(account.refresh_token);
         token.accessToken = account.access_token
         token.refreshToken = account.refresh_token
         token.id = profile.id
@@ -42,25 +40,16 @@ export const authOptions = {
         return token;
       }
 
-
-      // console.log("TOKEN"); console.log(token);
-      // console.log("ACCOUNT"); console.log(account)
-      // console.log('PROFILE'); console.log(profile);
-
       // Access token has expired, try to update it
       var newToken = await refreshAccessToken(token);
-      // console.log('NEW TOKEN: '); console.log(newToken);
       return newToken;
     },
 
     async session({ session, token }) {
-
-      // console.log('SESSION TOKEN'); console.log(token);
       session.user = token.name
       session.accessToken = token.accessToken
       session.refreshToken = token.refreshToken
       session.error = token.error
-
       return session
     },
 
@@ -68,7 +57,6 @@ export const authOptions = {
 }
 
 async function refreshAccessToken(token) {
-  console.log('refreshing')
   try {
     const url =
       "https://www.strava.com/oauth/token?" +
