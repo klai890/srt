@@ -77,7 +77,7 @@ export default function Home() {
               </div>
           </Link>          
 
-          <Link href={`/settings`} className={styles.card}> 
+          <Link href={`/sheets`} className={styles.card}> 
             <Image
                 src="/settings.svg"
                 alt="Vercel Logo"
@@ -88,7 +88,7 @@ export default function Home() {
               />
               <div>
                 <h2 className={inter.className}>
-                  Settings
+                  Sheets
                 </h2>
                 <p className={inter.className}>
                   Change default run names!

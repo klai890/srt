@@ -37,7 +37,7 @@ export default function Banner() {
         {/* Nav */}  
         <ul className={bannerStyles.nav}>
             <li className={bannerStyles.navItem}> <Link href={'/mileage'}> Mileage </Link></li>
-            <li className={bannerStyles.navItem}> <Link href={'/settings'}> Settings </Link></li>
+            <li className={bannerStyles.navItem}> <Link href={'/sheets'}> Sheets </Link></li>
             <li className={bannerStyles.navItem}> <Link href={'/gear'} > Equipment </Link></li>
         </ul>
       </main>

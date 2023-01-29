@@ -15,12 +15,12 @@ import { unstable_getServerSession } from "next-auth/next"
 export async function getServerSideProps(context){
   const session = await unstable_getServerSession(context.req, context.res, authOptions)
 
-  // console.log("SESSION: ")
-  // console.log(session);
+  console.log("SESSION: ")
+  console.log(session);
   const token = await getToken({req: context.req, secret: process.env.NEXTAUTH_SECRET});
 
-  // console.log('TOKEN:')
-  // console.log(token);
+  console.log('TOKEN:')
+  console.log(token);
 
   if (token){
 
@@ -32,8 +32,8 @@ export async function getServerSideProps(context){
       refreshToken: session.refreshToken
     });
     
-    // console.log("SERVERSIDE PROPS DATA: ")
-    // console.log(data);
+    console.log("SERVERSIDE PROPS DATA: ")
+    console.log(data);
     
     return {
       props: {

@@ -69,8 +69,8 @@ export const formatData = async function({userId, accessToken, refreshToken}) {
         json = await response.json();
     }
 
-    // console.log("<-------------------------CSV TABLE------------------------->")
-    // csvTable.forEach(obj => console.log(obj));
+    console.log("<-------------------------CSV TABLE------------------------->")
+    csvTable.forEach(obj => console.log(obj));
     return csvTable.reverse();
 }
 
