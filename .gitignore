@@ -34,3 +34,5 @@ Spreadsheet.json
 # vercel
 .vercel
 
+# Notes
+*.txt
