@@ -1,22 +1,3 @@
-// import Metadata from '../components/Metadata';
-// import { Inter } from '@next/font/google'
-// import styles from '../styles/Settings.module.css'
-// import Link from 'next/link';
-// import Banner from '../components/Banner';
-// import Layout from '../components/Layout';
-
-// const inter = Inter({ subsets: ['latin'] })
-
-// export default function Home() {
-//   return (
-//     <Layout>
-//       <div className={styles.pageHeader}>
-//         <h1 className={styles.h2}>Change default settings!</h1>
-//         <p> Under construction! </p>
-//       </div>    
-//     </Layout>
-//   )
-// }
 import styles from '../styles/Mileage.module.css'
 import Layout from '../components/Layout';
 import Image from 'next/image';
@@ -27,7 +8,13 @@ import jwt from 'jsonwebtoken';
 import cookieCutter from 'cookie-cutter'
 import { formatData, headers } from '../lib/strava/api/mileage-csv';
 import parseGooglePath from '../utils/parseGooglePath';
-import type {GoogleUser, GoogleParams} from '../typings';
+import type {GoogleUser, GoogleParams, NewSpreadsheet} from '../typings';
+import { useSession, signIn, signOut } from "next-auth/react"
+import {CSVLink, CSVDownload} from 'react-csv';
+import { getToken } from "next-auth/jwt"
+import { authOptions } from './api/auth/[...nextauth].js'
+import { unstable_getServerSession } from "next-auth/next"
+import type ActivityWeek from '../lib/strava/models/ActivityWeek'
 
 // TODO: 
 // * Store Token data in the session (or another variable)?
@@ -42,18 +29,60 @@ const SHEETS_COOKIE = 'sheets-token';
 
 // JWT Key
 const KEY = 'TUxj90CG5oOqMDOwPI378k1LYTAJtVTvZ_qUZECqyxdbYw3US1PAW3wqZy4FXgraACn7zbM7fPZFHcUoBtb-VA';
+
+// https://stackoverflow.com/questions/65752932/internal-api-fetch-with-getserversideprops-next-js
+export async function getServerSideProps(context){
+  const session = await unstable_getServerSession(context.req, context.res, authOptions)
+
+  console.log("SESSION: ")
+  console.log(session);
+  const token = await getToken({req: context.req, secret: process.env.NEXTAUTH_SECRET});
+
+  console.log('TOKEN:')
+  console.log(token);
+
+  if (token){
+
+    // console.log("PASSED REFRESH TOKEN:")
+    // console.log(session.refreshToken);
+    const data = await formatData({
+      userId: token.id, 
+      accessToken: session.accessToken, 
+      refreshToken: session.refreshToken
+    });
+    
+    console.log("SERVERSIDE PROPS DATA: ")
+    console.log(data);
+    
+    return {
+      props: {
+        csvData : data
+      }
+    }
+  }
+
+  else 
+  return { 
+    props: {
+      csvData: null
+    }
+  }
+}
+
 /**
  * The component!
  */
-function Sheets() {
+function Sheets({csvData}) {
 
   const router =  useRouter();
+  const { data: session } = useSession();
 
   // Maybe instead of storing session as a boolean, store it as the
   // {access_token, token_type, expires_in, scope} format (make an interface)
   // So I can access it in the methods.
-  const [session, setSession] = useState<boolean>(false);
+  const [googleSession, setGoogleSession] = useState<boolean>(false);
   const [googleInfo, setGoogleInfo] = useState<GoogleUser>(null);
+  const [spreadsheetId, setSpreadsheetId] = useState<string>(null);
 
 
   const googleProfile = async () => {
@@ -96,7 +125,7 @@ function Sheets() {
   /**
    * Links to OAuth to authorize Google
    */
-  const signIn = () => {
+  const googleSignIn = () => {
         // Google's OAuth 2.0 endpoint for requesting an access token
       var oauth2Endpoint = 'https://accounts.google.com/o/oauth2/v2/auth';
     
@@ -192,19 +221,126 @@ function Sheets() {
    * TODO: CHECK expiration date, add refresh token
    */
   function validateCookies(): void {
-    if (cookieCutter.get(SHEETS_COOKIE) && cookieCutter.get(SHEETS_COOKIE).length != 0) setSession(true);
+    if (cookieCutter.get(SHEETS_COOKIE) && cookieCutter.get(SHEETS_COOKIE).length != 0) setGoogleSession(true);
   }
 
   /**
    * Signs out a user from Google
    */
-  function signOut() {
+  function googleSignOut() {
     // Remove cookie
     cookieCutter.set(SHEETS_COOKIE, '');
 
     // Issue: After removed, we need to update!
     // Use a REACT hook to update!
-    setSession(false);
+    setGoogleSession(false);
+  }
+
+  /**
+   * Exports Strava mileage to Google sheets
+   */
+  async function exportMileage(){
+    // If not, don't do anything (TODO: maybe throw error?)
+    if (googleSession && csvData) {
+      // POST https://sheets.googleapis.com/v4/spreadsheets
+      const google_sheets_endpoint = `https://sheets.googleapis.com/v4/spreadsheets?key=${process.env.NEXT_PUBLIC_GAPI_KEY}`;
+      const jwt_token = cookieCutter.get(SHEETS_COOKIE);
+      
+      // FETCH /api/token (retrieve Google access token)
+      const token_res = await fetch('/api/token', {
+        method: 'POST',
+        headers: {
+          // Make sure backend knows we're sending JSON data!!
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({jwt_token})
+      }).then(t => t.json())
+      
+      var access_token;
+  
+      if (token_res.access_token) access_token = token_res.access_token;
+
+      const spreadsheetSettings : NewSpreadsheet = {
+        properties: {
+          title: 'Imported Strava Mileage'
+        },
+      }
+  
+  
+      // POST https://sheets.googleapis.com/v4/spreadsheets (create a spreadsheet)
+      const res: NewSpreadsheet = await fetch(google_sheets_endpoint, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${access_token}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }, 
+        body: JSON.stringify(spreadsheetSettings)
+      }).then(t => t.json())
+      .catch(err => console.error(err));
+
+      console.log("<----------------------------- NEW SPREADSHEET RES ---------------------------------->")
+      var sheetId;
+      if (res &&  res.spreadsheetId) {
+        sheetId = res.spreadsheetId;
+        setSpreadsheetId(res.spreadsheetId)
+      }
+
+      // PUT https://sheets.googleapis.com/v4/spreadsheets/{spreadsheetId}/values/{range}  (fill spreadsheet)
+      // TODO: Update data to array of arrays.
+      const sheetData= []
+      sheetData.push(["week", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "mileage"]);
+
+      console.log("<---------------------- CSV DATA ------------------------------------->")
+      console.log(csvData)
+      if (csvData){
+        for (var i = 0; i < csvData.length; i++){
+          const week : ActivityWeek = csvData[i];
+          const keys = Object.keys(week);
+          const weekArray = []
+          keys.forEach(key => {
+            var miles = week[key];
+            weekArray.push(miles);
+          })
+          sheetData.push(weekArray)
+        }
+      }
+
+      const range = `Sheet1!A1:I${sheetData.length}`
+      const sheets_put_endpoint = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}?valueInputOption=RAW`
+
+
+      console.log("<---------------------- SPREADSHEET DATA ------------------------------------->")
+      console.log(sheetData);
+      
+      
+      const putRes = await fetch(sheets_put_endpoint, {
+        method: 'PUT', 
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${access_token}`
+        },
+        body: JSON.stringify({
+          majorDimension: 'ROWS', 
+          range: range,
+          values: sheetData, 
+        })
+      }).then(t => {
+        console.log("<-------------------------- SUCCESSFULLY WROTE MILEAGE TO SHEET------------------------------>")
+        return t.json()
+      })
+      .catch(err => console.error(err))
+
+      /**
+       * values: [
+       *  ["week", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "mileage"],
+       *  [arr[i].week, arr[i].monday, ... arr[i].sunday, arr[i].mileage]
+       * ]
+       */
+  
+      console.log("<-------------------- THE RESPONSE ------------------------------>");
+      console.log(putRes);
+    }
   }
 
   /**
@@ -218,7 +354,7 @@ function Sheets() {
     validateCookies();
 
     // Get info
-    if (session && googleInfo == null) googleProfile();
+    if (googleSession && googleInfo == null) googleProfile();
   })
 
   return (
@@ -233,24 +369,22 @@ function Sheets() {
           <div className={styles.btnContent}>
 
         {/* Logged in : Options */}
-        {session && googleInfo &&(
+        {googleSession && googleInfo &&(
           <>
                 <p className={styles.description}>Signed in through Google Sheets as {googleInfo.name}</p>
 
                 <div className={styles.btnGrid}>
 
-                    {/* {csvData && (
-                        <CSVLink 
-                          data={csvData} 
-                          headers={headers}
-                          filename={"mileage.csv"}
-                          className={styles.btn}
-                        >
-                          Export Mileage as CSV
-                        </CSVLink>
-                    )} */}
+                    {csvData && (
+                      <button className={styles.btn} id={styles.btn2} onClick={() => exportMileage()}>
+                        Export Mileage to Google Sheets
+                       </button>
 
-                <button className={styles.btn} id={styles.btn2} onClick={() => signOut()}>
+                    )}
+
+
+
+                <button className={styles.btn} id={styles.btn2} onClick={() => googleSignOut()}>
                   Sign Out of Google Sheets
                 </button>
               </div>
@@ -258,13 +392,13 @@ function Sheets() {
         )}
 
         {/* Not logged in : Prompt */}
-        { !session && (
+        { !googleSession && (
             <>        
                   <p className={styles.description}>
                     Authorize Google to use the aforementioned services!
                   </p>
         
-                  <button onClick={() => signIn()} className={styles.googleBtn}>
+                  <button onClick={() => googleSignIn()} className={styles.googleBtn}>
                     <Image
                       src="/btn_google_signin_dark_focus_web.png"
                       alt="Connect with Google Sheets"
@@ -278,25 +412,58 @@ function Sheets() {
         </div>
       </div>
 
+      <div className={styles.btnContainer}>
+          <div className={styles.btnContent}>
+ {/* Logged in : Options */}
+ {session && (
+          <>
+                <p className={styles.description}>Signed in through Strava as {session.user}</p>
+
+                <div className={styles.btnGrid}>
+
+                    {csvData && (
+                        <CSVLink 
+                          data={csvData} 
+                          headers={headers}
+                          filename={"mileage.csv"}
+                          className={styles.btn}
+                        >
+                          Export Mileage as CSV
+                        </CSVLink>
+                    )}
+
+                <button className={styles.btn} id={styles.btn2} onClick={() => signOut()}>
+                  Sign Out of Strava
+                </button>
+              </div>
+          </>
+        )}
+
+
+
+        {/* Not logged in : Prompt */}
+        { !session && (
+            <>        
+                  <p className={styles.description}>
+                    Please authorize Strava to use the aforementioned services!
+                  </p>
+        
+                  <button onClick={() => signIn()} className={styles.stravaBtn}>
+                    <Image
+                      src="/btn_strava_connectwith_orange.svg"
+                      alt="Connect with Strava"
+                      width={225}
+                      height={55}
+                    />
+                  </button>
+            </>
+        )}
+
+        </div>
+        </div>
+
     </Layout>
   )
 }
 
 export default Sheets;
-
-
-// https://nextjs.org/docs/basic-features/data-fetching/get-server-side-props#getserversideprops-with-edge-api-routes
-
-// getServerSideProps can be used with both Serverless and Edge Runtimes, and 
-// you can set props in both. However, currently in Edge Runtime, you do not 
-// have access to the response object. This means that you cannot — 
-// for example — add cookies in getServerSideProps. To have access to the 
-// response object, you should continue to use the Node.js runtime, which is 
-// the default runtime.
-
-// You can explicitly set the runtime on a per-page basis by modifying the config, for example:
-
-
-// export const config = {
-//   runtime: 'nodejs',
-// }

@@ -13,3 +13,18 @@ export type GoogleParams = {
     expires_in: string,
     scope: string
 }
+
+export type NewSpreadsheet =  {
+    spreadsheetId?: string,
+    properties?: SpreadsheetProperties,
+    sheets?: Array<object>,
+    namedRanges?: Array<object>,
+    spreadsheetUrl?: string,
+}   
+
+type SpreadsheetProperties = {
+    autoRecalc?: string,
+    defaultFormat?: object,
+    locale?: string,
+    title?: string
+}

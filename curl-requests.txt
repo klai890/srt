@@ -1,0 +1,42 @@
+# CURL Request for Creating a new GSpreadsheet
+curl --request POST \
+  'https://sheets.googleapis.com/v4/spreadsheets?key=946470171720-3stkt8fdsuho3lrduc4834t8lk0tp2et.apps.googleusercontent.com' \
+  --header 'Authorization: Bearer ya29.a0AVvZVspusAzCrTLxhctCNV6SNup8Yo0ojtjsUbeMr9fuRY4TdQuRvOKCeFpe5yyqdQy0SmtURv7qIqAAcJP2i088LIIRrhjalr5MxRywl-vMDgob6Pk04usyQreZOGO1jywpJt4a3ozGC-_JVQABjGN9E5d5aCgYKAfISARISFQGbdwaIbvXU_wUCXfG72VnZmDqIJA0163' \
+  --header 'Accept: application/json' \
+  --header 'Content-Type: application/json' \
+  --data '{}' \
+  --compressed
+
+spreadsheetId: 1htDb43uGn9WWpH16HY0JTr7weJHiEtHvKxkaWC-7dFU
+range: Sheet1!A1:A8
+valueInputOption: RAW
+
+{
+  "majorDimension": "ROWS",
+  "range": "Sheet1!A1:A8",
+  "values": [
+    [
+      "week",
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+      "sunday",
+      "mileage"
+    ]
+  ]
+}
+
+PUT RESPONSE
+{
+  "spreadsheetId": "1htDb43uGn9WWpH16HY0JTr7weJHiEtHvKxkaWC-7dFU",
+  "updates": {
+    "spreadsheetId": "1htDb43uGn9WWpH16HY0JTr7weJHiEtHvKxkaWC-7dFU",
+    "updatedRange": "Sheet1!A1:I1",
+    "updatedRows": 1,
+    "updatedColumns": 9,
+    "updatedCells": 9
+  }
+}
