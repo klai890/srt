@@ -313,7 +313,12 @@ function Sheets({csvData}) {
       console.log("<---------------------- SPREADSHEET DATA ------------------------------------->")
       console.log(sheetData);
       
-      
+      /**
+       * values: [
+       *  ["week", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "mileage"],
+       *  [arr[i].week, arr[i].monday, ... arr[i].sunday, arr[i].mileage]
+       * ]
+       */
       const putRes = await fetch(sheets_put_endpoint, {
         method: 'PUT', 
         headers: {
@@ -330,18 +335,15 @@ function Sheets({csvData}) {
         return t.json()
       })
       .catch(err => console.error(err))
-
-      /**
-       * values: [
-       *  ["week", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "mileage"],
-       *  [arr[i].week, arr[i].monday, ... arr[i].sunday, arr[i].mileage]
-       * ]
-       */
   
       console.log("<-------------------- THE RESPONSE ------------------------------>");
       console.log(putRes);
     }
   }
+
+  /**
+   * 
+   */
 
   /**
    * The function equivalent on componentOnMount
@@ -381,8 +383,6 @@ function Sheets({csvData}) {
                        </button>
 
                     )}
-
-
 
                 <button className={styles.btn} id={styles.btn2} onClick={() => googleSignOut()}>
                   Sign Out of Google Sheets
