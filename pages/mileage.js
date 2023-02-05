@@ -1,39 +1,25 @@
 import styles from '../styles/Mileage.module.css'
 import Layout from '../components/Layout';
 import Image from 'next/image';
-
 import { useSession, signIn, signOut } from "next-auth/react"
-import {CSVLink, CSVDownload} from 'react-csv';
+import { CSVLink } from 'react-csv';
 import { getToken } from "next-auth/jwt"
 import { formatData, headers } from '../lib/strava/api/mileage-csv';
 import { authOptions } from './api/auth/[...nextauth].js'
 import { unstable_getServerSession } from "next-auth/next"
-// import { authenticate } from '../lib/strava/api/Authorization.js'
 
 
 // https://stackoverflow.com/questions/65752932/internal-api-fetch-with-getserversideprops-next-js
 export async function getServerSideProps(context){
   const session = await unstable_getServerSession(context.req, context.res, authOptions)
-
-  console.log("SESSION: ")
-  console.log(session);
   const token = await getToken({req: context.req, secret: process.env.NEXTAUTH_SECRET});
 
-  console.log('TOKEN:')
-  console.log(token);
-
   if (token){
-
-    // console.log("PASSED REFRESH TOKEN:")
-    // console.log(session.refreshToken);
     const data = await formatData({
       userId: token.id, 
       accessToken: session.accessToken, 
       refreshToken: session.refreshToken
     });
-    
-    console.log("SERVERSIDE PROPS DATA: ")
-    console.log(data);
     
     return {
       props: {
@@ -59,49 +45,28 @@ export default function Mileage({ csvData }) {
   return (
     <Layout>
       <div className={styles.pageHeader}>
-        <h1 className={styles.h2}>Strava, I want a mileage log!</h1>
-        <p> Track runs on Strava to automatically update a mileage log on Google Sheets! </p>
+        <h1 className={styles.h2}>Download your Mileage Log!</h1>
+        <p> A readable CSV file containing all your miles! </p>
       </div>
 
         {/* Image Gallery – Beautiful Advertising Screenshots */}
         <div className={styles.gallery}>
-
-          <div className={styles.card}>
             <Image
-              src="/shoe.svg"
-              alt="Gallery Image"
-              width={100}
-              height={100}
+              className={styles.csvWidescreen}
+              src="/csv.png"
+              alt="Image of CSV File"
+              width={753}
+              height={406}
               priority
             />
-          </div>
-          <div className={styles.card}>
             <Image
-              src="/shoe.svg"
-              alt="Gallery Image"
-              width={100}
-              height={100}
+              className={styles.csvMobile}
+              src="/csv-mobile.png"
+              alt="Image of CSV File"
+              width={336}
+              height={400}
               priority
             />
-          </div>
-          <div className={styles.card}>
-            <Image
-              src="/shoe.svg"
-              alt="Gallery Image"
-              width={100}
-              height={100}
-              priority
-            />
-          </div>
-          <div className={styles.card}>
-            <Image
-              src="/shoe.svg"
-              alt="Gallery Image"
-              width={100}
-              height={100}
-              priority
-            />
-          </div>
         </div>
 
         <div className={styles.btnContainer}>

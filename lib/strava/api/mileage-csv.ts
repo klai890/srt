@@ -79,7 +79,7 @@ export const formatData = async function({userId, accessToken, refreshToken}) {
  * @param activityId, userId, accessToken
  * @return the mileage of the activity of id activityId if the activity is of type run.
  */
-export const activityMileage = async function ({activityId, userId, accessToken}) {
+export const activityMileage = async function (activityId, accessToken) {
   // <------------------------- RETRIEVE CREDENTIALS ---------------------------->
     // console.log(userId); console.log(accessToken); console.log(refreshToken);
     const ATHLETES_ENDPOINT = `https://www.strava.com/api/v3/activities/${activityId}?include_all_efforts=false`;

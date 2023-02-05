@@ -2,8 +2,6 @@ import Metadata from '../components/Metadata';
 import { Inter } from '@next/font/google'
 import styles from '../styles/Home.module.css'
 import Link from 'next/link';
-import Banner from '../components/Banner';
-import Footer from '../components/Footer';
 import Image from 'next/image'
 import Layout from '../components/Layout';
 

@@ -10,18 +10,10 @@
 }
 
 .gallery {
-    display: grid;
-    /* insert screenshots  */
-    grid-template-columns: 1fr 1fr;
     margin: 1rem;
     text-align: center;
     justify-content: center;
     align-items: center;
-}
-
-.card {
-    border: 1px solid black;
-    margin: 1rem;
 }
 
 /* Mileage Button Styles */
@@ -59,14 +51,76 @@
     margin-bottom: 1.5rem;
 }
 
+.csvWidescreen {
+    border: 1px solid black;
+    display: inline;
+}
+
+.csvMobile {
+    border: 1px solid black;
+    display: none;
+}
+
+.sheetsWidescreen {
+    border: 1px solid black;
+    display: inline;
+}
+
+.sheetsMobile {
+    border: 1px solid black;
+    display: none;
+}
+
+.authBtn {
+    border-radius: 3px;
+    margin: 0.25rem;
+}
+
+.authBtn:hover {
+    cursor: pointer;
+}
+
 .stravaBtn {
     background: #fc4c02;
-    border-radius: 3px;
     border-color: #fc4c02;
 }
 
-@media screen and (max-width: 700px){
-    .gallery {
-        grid-template-columns: 1fr;
+.googleBtn {
+    background: #5383EC;
+    border-color: #5383EC;
+}
+
+@media screen and (max-width: 990px){
+    .sheetsWidescreen {
+        width: 606px;
+        height: 169px;
+    }
+}
+
+@media screen and (max-width: 850px){
+    .csvWidescreen {
+        width: 565px;
+        height: 304px;
+    }    
+    .btnContent {
+        max-width: 90%;
+    }
+}
+
+@media screen and (max-width: 650px){
+    .gallery{
+        margin: 0;
+    }
+    .csvWidescreen{
+        display: none
+    }
+    .csvMobile{
+        display: inline;
+    }    
+    .sheetsWidescreen{
+        display: none
+    }
+    .sheetsMobile{
+        display: inline;
     }
 }

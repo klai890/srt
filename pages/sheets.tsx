@@ -2,7 +2,7 @@ import styles from '../styles/Mileage.module.css'
 import Layout from '../components/Layout';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
-import { useRouter, NextRouter } from 'next/router'
+import { useRouter } from 'next/router'
 import React from 'react'
 import jwt from 'jsonwebtoken';
 import cookieCutter from 'cookie-cutter'
@@ -10,63 +10,33 @@ import { formatData, headers } from '../lib/strava/api/mileage-csv';
 import parseGooglePath from '../utils/parseGooglePath';
 import type {GoogleUser, GoogleParams, NewSpreadsheet} from '../typings';
 import { useSession, signIn, signOut } from "next-auth/react"
-import {CSVLink, CSVDownload} from 'react-csv';
+import {CSVLink} from 'react-csv';
 import { getToken } from "next-auth/jwt"
 import { authOptions } from './api/auth/[...nextauth].js'
-import { unstable_getServerSession } from "next-auth/next"
+import { getServerSession } from "next-auth/next"
 import type ActivityWeek from '../lib/strava/models/ActivityWeek'
-
-// TODO: 
-// * Store Token data in the session (or another variable)?
-// * Refresh token?
-// * Define signIn() for Strava (two separate sign in funcitons for Sheets and Strava)
-// * Extract CSV Data from sign in Strava
-// * Extract CSV Data into Google Sheets
-
+import {formatRequests} from '../utils/sheetFormat'
 
 // Name of cookie
 const SHEETS_COOKIE = 'sheets-token';
 
-// JWT Key
-const KEY = 'TUxj90CG5oOqMDOwPI378k1LYTAJtVTvZ_qUZECqyxdbYw3US1PAW3wqZy4FXgraACn7zbM7fPZFHcUoBtb-VA';
-
-// https://stackoverflow.com/questions/65752932/internal-api-fetch-with-getserversideprops-next-js
+// Login to Strava
 export async function getServerSideProps(context){
-  const session = await unstable_getServerSession(context.req, context.res, authOptions)
-
-  console.log("SESSION: ")
-  console.log(session);
+  const session = await getServerSession(context.req, context.res, authOptions)
   const token = await getToken({req: context.req, secret: process.env.NEXTAUTH_SECRET});
-
-  console.log('TOKEN:')
-  console.log(token);
 
   if (token){
 
-    // console.log("PASSED REFRESH TOKEN:")
-    // console.log(session.refreshToken);
     const data = await formatData({
       userId: token.id, 
       accessToken: session.accessToken, 
       refreshToken: session.refreshToken
     });
     
-    console.log("SERVERSIDE PROPS DATA: ")
-    console.log(data);
-    
-    return {
-      props: {
-        csvData : data
-      }
-    }
+    return { props: { csvData : data } }
   }
 
-  else 
-  return { 
-    props: {
-      csvData: null
-    }
-  }
+  return { props: { csvData: null } }
 }
 
 /**
@@ -76,13 +46,8 @@ function Sheets({csvData}) {
 
   const router =  useRouter();
   const { data: session } = useSession();
-
-  // Maybe instead of storing session as a boolean, store it as the
-  // {access_token, token_type, expires_in, scope} format (make an interface)
-  // So I can access it in the methods.
   const [googleSession, setGoogleSession] = useState<boolean>(false);
   const [googleInfo, setGoogleInfo] = useState<GoogleUser>(null);
-  const [spreadsheetId, setSpreadsheetId] = useState<string>(null);
 
 
   const googleProfile = async () => {
@@ -105,7 +70,6 @@ function Sheets({csvData}) {
     var access_token;
 
     if (token_res.access_token) access_token = token_res.access_token;
-
 
     // FETCH https://www.googleapis.com/oauth2/v1/userinfo?alt=json (user info)
     const res: GoogleUser = await fetch(google_profile_endpoint, {
@@ -279,27 +243,20 @@ function Sheets({csvData}) {
       }).then(t => t.json())
       .catch(err => console.error(err));
 
-      console.log("<----------------------------- NEW SPREADSHEET RES ---------------------------------->")
       var sheetId;
-      if (res &&  res.spreadsheetId) {
-        sheetId = res.spreadsheetId;
-        setSpreadsheetId(res.spreadsheetId)
-      }
+      if (res &&  res.spreadsheetId) sheetId = res.spreadsheetId;
 
       // PUT https://sheets.googleapis.com/v4/spreadsheets/{spreadsheetId}/values/{range}  (fill spreadsheet)
-      // TODO: Update data to array of arrays.
       const sheetData= []
-      sheetData.push(["week", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "mileage"]);
+      sheetData.push(["Week Of", "Mon", "Tues", "Wed", "Thurs", "Fri", "Sat", "Sun", "Mileage"]);
 
-      console.log("<---------------------- CSV DATA ------------------------------------->")
-      console.log(csvData)
       if (csvData){
         for (var i = 0; i < csvData.length; i++){
           const week : ActivityWeek = csvData[i];
           const keys = Object.keys(week);
           const weekArray = []
           keys.forEach(key => {
-            var miles = week[key];
+            var miles = week[key] == 0 ? '' : week[key];
             weekArray.push(miles);
           })
           sheetData.push(weekArray)
@@ -309,16 +266,6 @@ function Sheets({csvData}) {
       const range = `Sheet1!A1:I${sheetData.length}`
       const sheets_put_endpoint = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}?valueInputOption=RAW`
 
-
-      console.log("<---------------------- SPREADSHEET DATA ------------------------------------->")
-      console.log(sheetData);
-      
-      /**
-       * values: [
-       *  ["week", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "mileage"],
-       *  [arr[i].week, arr[i].monday, ... arr[i].sunday, arr[i].mileage]
-       * ]
-       */
       const putRes = await fetch(sheets_put_endpoint, {
         method: 'PUT', 
         headers: {
@@ -330,20 +277,38 @@ function Sheets({csvData}) {
           range: range,
           values: sheetData, 
         })
-      }).then(t => {
-        console.log("<-------------------------- SUCCESSFULLY WROTE MILEAGE TO SHEET------------------------------>")
-        return t.json()
-      })
+      }).then(t => { return t.json() })
       .catch(err => console.error(err))
+
+      // TODO: ##666666 Sheet1!A1:I1
+      // const sheets_post_endpoint = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}:batchUpdate`
+      // console.log(formatRequests);
+
+      // const postRes = await fetch(sheets_post_endpoint, {
+      //   method: 'POST', 
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //     'Authorization': `Bearer ${access_token}`
+      //   },
+      //   body: JSON.stringify({
+      //     requests: formatRequests
+      //   })
+      // }).then(t => { return t.json() })
+      // .catch(err => console.error(err))
   
-      console.log("<-------------------- THE RESPONSE ------------------------------>");
-      console.log(putRes);
+      // console.log("<-------------------- POST RESPONSE ------------------------------>");
+      // console.log(postRes);
+
+
+      // TODO: ##ff6d01 Sheet1!A2:A{len}
+
+      // TODO: ##ff6d01 Sheet1!I2:I{len}
+
+      // TODO: format:center Sheet1!A1:I{len}
+
+      // TODO: User message
     }
   }
-
-  /**
-   * 
-   */
 
   /**
    * The function equivalent on componentOnMount
@@ -363,16 +328,67 @@ function Sheets({csvData}) {
     <Layout>
       
       <div className={styles.pageHeader}>
-        <h1 className={styles.h2}>Strava, I want a mileage log because I'm a mileage hog!</h1>
-        <p> Track runs on Strava to automatically update a mileage log on Google Sheets! </p>
+        <h1 className={styles.h2}>Download your Mileage Log!</h1>
+        <p>A readable Google Sheet containing all your miles!</p>
       </div>
 
-        <div className={styles.btnContainer}>
-          <div className={styles.btnContent}>
+      {/* Image Gallery – Beautiful Advertising Screenshots */}
+      <div className={styles.gallery}>
+        <Image
+          className={styles.sheetsWidescreen}
+          src="/sheets.png"
+          alt="Image of CSV File"
+          width={909}
+          height={253}
+          priority
+        />
+        <Image
+          className={styles.sheetsMobile}
+          src="/sheets-mobile.png"
+          alt="Image of CSV File"
+          width={336}
+          height={166}
+          priority
+        />
+      </div>
+
+        {/* Not logged in : Prompt */}
+        { !googleSession || session == undefined ? (
+              <div className={styles.btnContainer}>
+                <div className={styles.btnContent}>
+                  <p className={styles.description}>
+                    Authorize Google and Strava to use the aforementioned services!
+                  </p>
+
+                  {!googleSession && (
+                    <button onClick={() => googleSignIn()} className={`${styles.googleBtn} ${styles.authBtn}`}>
+                      <Image
+                        src="/btn_google_signin_dark_normal_web@2x.png"
+                        alt="Connect with Google Sheets"
+                        width={228}
+                        height={55}
+                      />
+                    </button>
+                  )}
+
+                  {!session && (
+                    <button onClick={() => signIn()} className={`${styles.stravaBtn} ${styles.authBtn}`}>
+                      <Image
+                        src="/btn_strava_connectwith_orange.svg"
+                        alt="Connect with Strava"
+                        width={225}
+                        height={55}
+                      />
+                    </button>
+                  )}
+            </div>
+          </div>
+        ) : (<></>)}
 
         {/* Logged in : Options */}
         {googleSession && googleInfo &&(
-          <>
+          <div className={styles.btnContainer}>
+              <div className={styles.btnContent}>
                 <p className={styles.description}>Signed in through Google Sheets as {googleInfo.name}</p>
 
                 <div className={styles.btnGrid}>
@@ -380,7 +396,7 @@ function Sheets({csvData}) {
                     {csvData && (
                       <button className={styles.btn} id={styles.btn2} onClick={() => exportMileage()}>
                         Export Mileage to Google Sheets
-                       </button>
+                      </button>
 
                     )}
 
@@ -388,35 +404,15 @@ function Sheets({csvData}) {
                   Sign Out of Google Sheets
                 </button>
               </div>
-          </>
+            </div>
+          </div>
+
         )}
 
-        {/* Not logged in : Prompt */}
-        { !googleSession && (
-            <>        
-                  <p className={styles.description}>
-                    Authorize Google to use the aforementioned services!
-                  </p>
-        
-                  <button onClick={() => googleSignIn()} className={styles.googleBtn}>
-                    <Image
-                      src="/btn_google_signin_dark_focus_web.png"
-                      alt="Connect with Google Sheets"
-                      width={382}
-                      height={92}
-                    />
-                  </button>
-            </>
-        )}
-
-        </div>
-      </div>
-
-      <div className={styles.btnContainer}>
-          <div className={styles.btnContent}>
- {/* Logged in : Options */}
- {session && (
-          <>
+        {/* Logged in : Options */}
+        {session && (
+            <div className={styles.btnContainer}>
+              <div className={styles.btnContent}>      
                 <p className={styles.description}>Signed in through Strava as {session.user}</p>
 
                 <div className={styles.btnGrid}>
@@ -436,31 +432,11 @@ function Sheets({csvData}) {
                   Sign Out of Strava
                 </button>
               </div>
-          </>
+            </div>
+        </div>
+
         )}
 
-
-
-        {/* Not logged in : Prompt */}
-        { !session && (
-            <>        
-                  <p className={styles.description}>
-                    Please authorize Strava to use the aforementioned services!
-                  </p>
-        
-                  <button onClick={() => signIn()} className={styles.stravaBtn}>
-                    <Image
-                      src="/btn_strava_connectwith_orange.svg"
-                      alt="Connect with Strava"
-                      width={225}
-                      height={55}
-                    />
-                  </button>
-            </>
-        )}
-
-        </div>
-        </div>
 
     </Layout>
   )

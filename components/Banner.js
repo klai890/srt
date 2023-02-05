@@ -24,20 +24,19 @@ export default function Banner() {
               />
               {/* Heading */}
               <h1 id={bannerStyles.siteTitle}> 
-                  <Link href={'/'}>Strava Running Tools</Link>
+                  <Link href={'/'}>Mileage Log for Strava</Link>
               </h1>
 
-              <p>A set of tools which makes using Strava easier for runners. Made by a random kid, NOT affiliated with Strava</p>
-
-
+              <p>A Strava add-on which enables you to export your mileage log in a readable format from Strava</p>
           </div>
 
 
         </div>
         {/* Nav */}  
         <ul className={bannerStyles.nav}>
-            <li className={bannerStyles.navItem}> <Link href={'/mileage'}> Mileage </Link></li>
-            <li className={bannerStyles.navItem}> <Link href={'/sheets'}> Google Sheets Integration </Link></li>
+            <li className={bannerStyles.navItem}> <Link href={'/mileage'}> CSV Mileage Export </Link></li>
+            <li className={bannerStyles.navItem}> <Link href={'/sheets'}> Google Sheets Mileage Export </Link></li>
+            <li className={bannerStyles.navItem}> <Link href={'/autoupdate'}> Auto-Update Google Sheets </Link></li>
         </ul>
       </main>
     </>
