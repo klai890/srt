@@ -74,6 +74,32 @@ export const formatData = async function({userId, accessToken, refreshToken}) {
     return csvTable.reverse();
 }
 
+/**
+ * 
+ * @param activityId, userId, accessToken
+ * @return the mileage of the activity of id activityId if the activity is of type run.
+ */
+export const activityMileage = async function ({activityId, userId, accessToken}) {
+  // <------------------------- RETRIEVE CREDENTIALS ---------------------------->
+    // console.log(userId); console.log(accessToken); console.log(refreshToken);
+    const ATHLETES_ENDPOINT = `https://www.strava.com/api/v3/activities/${activityId}?include_all_efforts=false`;
+    
+    // <------------------------- RETRIEVE ACTIVITY DATA ------------------------------------
+    const data : Activity = await fetch(ATHLETES_ENDPOINT, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${accessToken}`,
+        }
+    }).then(t => t.json())
+    .catch(err => console.error(err))
+    
+    console.log("<-------------------------ACTIVITY------------------------->")
+    console.log(data);
+
+    const distance = data.distance * 0.000621371192; // meters to miles
+    return distance;
+}
+
 // <--------------------- HELPER FUNCTIONS ----------------------->
 
 // TODO: case api calls split the week?
