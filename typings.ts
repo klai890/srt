@@ -28,3 +28,23 @@ type SpreadsheetProperties = {
     locale?: string,
     title?: string
 }
+
+
+export type StravaSession = {
+    name?: string,
+    user?: string,
+    expires?: string,
+    accessToken?: string,
+    refreshToken?: string,
+    error?: string
+  }
+  
+
+export type Token = {
+    name?: string,
+    expires?: string,
+    accessToken?: string,
+    refreshToken?: string,
+    error?: string
+
+}

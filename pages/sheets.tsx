@@ -8,21 +8,25 @@ import jwt from 'jsonwebtoken';
 import cookieCutter from 'cookie-cutter'
 import { formatData, headers } from '../lib/strava/api/mileage-csv';
 import parseGooglePath from '../utils/parseGooglePath';
-import type {GoogleUser, GoogleParams, NewSpreadsheet} from '../typings';
+import type {GoogleUser, GoogleParams, NewSpreadsheet, StravaSession} from '../typings';
 import { useSession, signIn, signOut } from "next-auth/react"
 import {CSVLink} from 'react-csv';
 import { getToken } from "next-auth/jwt"
 import { authOptions } from './api/auth/[...nextauth].js'
-import { getServerSession } from "next-auth/next"
+import { unstable_getServerSession } from "next-auth/next"
 import type ActivityWeek from '../lib/strava/models/ActivityWeek'
 import {formatRequests} from '../utils/sheetFormat'
+import type { GetServerSideProps, GetServerSidePropsContext, PreviewData } from "next";
+import type { NextAuthOptions } from 'next-auth'
 
 // Name of cookie
 const SHEETS_COOKIE = 'sheets-token';
 
 // Login to Strava
-export async function getServerSideProps(context){
-  const session = await getServerSession(context.req, context.res, authOptions)
+// @ts-ignore
+export async function getServerSideProps(context: GetServerSidePropsContext){
+  const opts : NextAuthOptions = authOptions as NextAuthOptions;
+  const session : StravaSession = await unstable_getServerSession(context.req, context.res, opts)
   const token = await getToken({req: context.req, secret: process.env.NEXTAUTH_SECRET});
 
   if (token){
@@ -413,7 +417,7 @@ function Sheets({csvData}) {
         {session && (
             <div className={styles.btnContainer}>
               <div className={styles.btnContent}>      
-                <p className={styles.description}>Signed in through Strava as {session.user}</p>
+                <p className={styles.description}>Signed in through Strava as {session.user.name}</p>
 
                 <div className={styles.btnGrid}>
 

@@ -7,6 +7,7 @@
 
 import NextAuth from "next-auth"
 import StravaProvider from "next-auth/providers/strava"
+import { NextAuthOptions } from "next-auth"
 
 export const authOptions = {
   providers: [
@@ -20,7 +21,7 @@ export const authOptions = {
     }),
   ],
   session: {
-    strategy: "jwt",
+    strategy: "jwt"
   },
 
   callbacks: {
@@ -46,6 +47,7 @@ export const authOptions = {
     },
 
     async session({ session, token }) {
+      session.name = token.name
       session.user = token.name
       session.accessToken = token.accessToken
       session.refreshToken = token.refreshToken

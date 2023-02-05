@@ -75,7 +75,7 @@ export default function Mileage({ csvData }) {
         {/* Logged in : Options */}
         {session && (
           <>
-                <p className={styles.description}>Signed in through Strava as {session.user}</p>
+                <p className={styles.description}>Signed in through Strava as {session.user.name}</p>
 
                 <div className={styles.btnGrid}>
 
