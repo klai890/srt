@@ -417,7 +417,7 @@ function Sheets({csvData}) {
         {session && (
             <div className={styles.btnContainer}>
               <div className={styles.btnContent}>      
-                <p className={styles.description}>Signed in through Strava as {session.user.name}</p>
+                <p className={styles.description}>Signed in through Strava as {session.user.toString()}</p>
 
                 <div className={styles.btnGrid}>
 

@@ -8,6 +8,13 @@ import { formatData, headers } from '../lib/strava/api/mileage-csv';
 import { authOptions } from './api/auth/[...nextauth].js'
 import { unstable_getServerSession } from "next-auth/next"
 
+// TODO:
+// Issue: Takes too long to retrieve data from Strava
+// 1. Implement On-Demand Revalidation
+//    a. OAuth -> Load page without Data (make mileage export button invisible)
+//    b. Revalidate page when data comes in
+//    c. Make mileage export button clickable.
+
 
 // https://stackoverflow.com/questions/65752932/internal-api-fetch-with-getserversideprops-next-js
 export async function getServerSideProps(context){
@@ -75,7 +82,7 @@ export default function Mileage({ csvData }) {
         {/* Logged in : Options */}
         {session && (
           <>
-                <p className={styles.description}>Signed in through Strava as {session.user.name}</p>
+                <p className={styles.description}>Signed in through Strava as {session.user.toString()}</p>
 
                 <div className={styles.btnGrid}>
 

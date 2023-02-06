@@ -7,7 +7,6 @@
 
 import NextAuth from "next-auth"
 import StravaProvider from "next-auth/providers/strava"
-import { NextAuthOptions } from "next-auth"
 
 export const authOptions = {
   providers: [
