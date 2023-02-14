@@ -8,7 +8,12 @@ import ActivityWeek from '../models/ActivityWeek';
 import SummaryActivity from '../models/SummaryActivity';
 import Activity from "../models/Activity";
 
+// TODO:
+// 1. Retrieve from a private cache
+// 2. Optimize – 
+
 const PER_PAGE = 200; // # activities per page
+const MAX_CALLS = 4;
 
 // Temporarily set it to my own account. TODO: Set up the /mileage -> /api/activities
 // redirect to retrieve the USER_ID from the request.
@@ -25,14 +30,53 @@ export var headers = [
     {label: 'Mileage', key: 'mileage'}
 ]
 
-export const formatData = async function({userId, accessToken, refreshToken}) {
+/**
+ * @params userId: The Strava user's id
+ * @params accessToken: The Strava user's access token
+ * @params before: Filter activities that have taken place before a certain time 
+ * @params after: Filter activities that have taken place after a certain time 
+ * 
+ * PRECONDITION: before and after are within 1 year of one another.
+ * The API takes too long to respond if it is more than one year
+ * 
+ * Retrieves data between Date after and Date before.
+ */
+export const getStravaData = async function(userId, accessToken, before: Date, after: Date) {
+    
+    // Setup Table
+    var csvTable : Array<ActivityWeek> = [];
+    const oldest : Date = prevMon(after)
+    const newest : Date = prevMon(before)
+    var d : Date = oldest;
+    var wk : ActivityWeek;
+
+    // https://groups.google.com/g/strava-api/c/KiQo6sVlWG4: before & after params must be in seconds
+    const bf : number = newest.valueOf() / 1000
+    const af : number = oldest.valueOf() / 1000
+    console.log(bf);
+    console.log(af);
+    
+    // Add each Monday to table
+    while (d <= newest) {
+        wk = {
+            'week': d.toLocaleDateString(), // ex: 1/6/2023
+            'monday': 0,
+            'tuesday': 0,
+            'wednesday': 0,
+            'thursday': 0,
+            'friday': 0,
+            'saturday': 0,
+            'sunday': 0,
+            'mileage': 0
+        }
+
+        csvTable.push(wk); // should update obj in orig func, if like Java.
+        d.setDate(d.getDate() + 7)
+    }
     
     // <------------------------- RETRIEVE CREDENTIALS ---------------------------->
     // console.log(userId); console.log(accessToken); console.log(refreshToken);
     const ATHLETES_ENDPOINT = `https://www.strava.com/api/v3/athletes/${userId}`;
-
-    // for parameter reference: https://developers.strava.com/docs/reference/#api-Activities-getLoggedInAthleteActivities
-    // can prob do some parameter manipulaiton & loops to get desired outcome
     
     // epoch: https://www.epochconverter.com/
     // max per page seems to be 200
@@ -40,38 +84,53 @@ export const formatData = async function({userId, accessToken, refreshToken}) {
     // <------------------------- RETRIEVE ACTIVITY DATA ------------------------------------>
 
     var i = 1;
-    var pageJson : Array<SummaryActivity> = [];
-    var csvTable : Array<ActivityWeek> = [];
-    var response : Response = await fetch(
-        `${ATHLETES_ENDPOINT}/activities?access_token=${accessToken}&page=${i}&per_page=${PER_PAGE}`
-    );
-    var json = await response.json();
-    // console.log(json);
-    
-    // Loop to retrieve ALL data. Uncomment at your own risk!!
-    while (json.length != 0) {
-        pageJson = prettify(json);
-        // console.log(pageJson);
-        // console.log('json, json.length');
-        // console.log(json);
-        // console.log(json.length);
+    var response : Array<SummaryActivity>= await fetch(
+        `${ATHLETES_ENDPOINT}/activities?access_token=${accessToken}&page=${i}&per_page=${PER_PAGE}&before=${bf}&after=${af}`
+    ).then(d => d.json()).then(d => {if (d) return prettify(d)})
 
-        // <--------------------- ADD DATA --------------------------------------->
-        csvTable = addData(pageJson, csvTable);
-        // console.log("--------- CSV TABLE MID PROCESS ----------");
-        // console.log(csvTable)
+    if (!response) return;
+
+    var responses : Array<SummaryActivity> = [];
+    
+    // Loop to retrieve this year's data
+
+    var start = Date.now();
+    var n; var e;
+
+    while ((response.length != 0 || i == 1) && i < MAX_CALLS) {
+
+        n = Date.now();
+        responses = responses.concat(response)
+        e = Date.now();
+
+        console.log(`<---------------------------------------- CONCAT EXECUTION TIME: ${e - n} ms ------------------------------------->`)
+
 
         i++;
-
+        
+        n = Date.now();
         response = await fetch(
-            `${ATHLETES_ENDPOINT}/activities?access_token=${accessToken}&page=${i}&per_page=${PER_PAGE}`
-        );
-        json = await response.json();
+            `${ATHLETES_ENDPOINT}/activities?access_token=${accessToken}&page=${i}&per_page=${PER_PAGE}&before=${bf}&after=${af}`
+        ).then(d => d.json()).then(d => {if (d) return prettify(d)})
+        e = Date.now();
+
+        // ISSUE: THE STRAVA API IS REALLY SLOW!
+
+        console.log(`<---------------------------------------- FETCH EXECUTION TIME: ${e - n} ms ------------------------------------->`)
     }
 
-    console.log("<-------------------------CSV TABLE------------------------->")
-    csvTable.forEach(obj => console.log(obj));
-    return csvTable.reverse();
+    if (i == MAX_CALLS) {
+        // Do something to alert the user
+    }
+
+    var end = Date.now();
+    console.log(`<----------------------------------------------- Retrieval Execution time: ${end - start} ms ----------------------------------------------->`);
+
+    start = Date.now();
+    csvTable = addData(responses, csvTable);
+    end = Date.now();
+    console.log(`<----------------------------------------------- Data Addition Execution time: ${end - start} ms ----------------------------------------------->`);
+    return csvTable;
 }
 
 /**
@@ -105,38 +164,18 @@ export const activityMileage = async function (activityId, accessToken) {
 // TODO: case api calls split the week?
 function addData(json : Array<SummaryActivity>, csvTable : Array<ActivityWeek>) : Array<ActivityWeek>{
 
-    // <---------------------- ADD TO CSV DATA ---------------------->
     // pop from existing data, add to csvTable
     while (json.length != 0) {
         // console.log("RETRIEVED DATA: ");
         // json.forEach(item => console.log(item))
         var date : Date = new Date(json[0].start_date); // may need Date.parse
-        var prevSun : Date = prevSunday(date);
-        var prevMon : Date = monday(prevSun);
+        var mon : Date = json[0].prev_mon;
 
         let run = json.shift();
         let day = activityWeekKey(new Date(run.start_date));
         
-        // see if week of prevMon exists. if so, add to there
-        // if csvTable includes obj that represents week prevMon:
-        //  add run mileage to that week
-        var week : ActivityWeek = csvTable.find(item => item.week === prevMon.toLocaleDateString());
-        
-        // if not in csvTable, create a new week for prevMon and add to it.
-        if (week === undefined){
-            week = {
-                'week': prevMon.toLocaleDateString(), // ex: 1/6/2023
-                'monday': 0,
-                'tuesday': 0,
-                'wednesday': 0,
-                'thursday': 0,
-                'friday': 0,
-                'saturday': 0,
-                'sunday': 0,
-                'mileage': 0
-            }
-            csvTable.push(week); // should update obj in orig func, if like Java.
-        }
+        // Get object
+        var week : ActivityWeek = csvTable.find(item => item.week === mon.toLocaleDateString());
 
         week[day] += run.distance;
         week['mileage'] += run.distance;
@@ -144,7 +183,6 @@ function addData(json : Array<SummaryActivity>, csvTable : Array<ActivityWeek>) 
         week['mileage'] = roundTwo(week['mileage']);
         
     }
-
     return csvTable;
     
 }
@@ -167,13 +205,12 @@ function prettify (json: Array<Activity>) : Array<SummaryActivity> {
         // var date : Date = new Date(activity.start_date_local);
         var miles : number = 0.000621371192 * activity.distance; // meters to miles
         return ({
-            name: activity.name,
             distance: roundTwo(miles),
-            type: activity.type,
-            start_date: activity.start_date_local
+            start_date: activity.start_date_local,
+            prev_mon: prevMon(new Date(activity.start_date))
         })
     })
-  
+    
     return condensedJson;
   }  
 
@@ -183,39 +220,19 @@ function prettify (json: Array<Activity>) : Array<SummaryActivity> {
  * @param date: Date 
  * @returns Date: sunday, the Sunday prior to date @ 11:59pm
  */
-function prevSunday(date: Date) : Date {
+function prevMon(date: Date) : Date {
     var day : number = date.getDay()
-    var sunday = new Date(date.getTime());
-    var diff = day; // # days to sunday
-    sunday.setDate(date.getDate() - diff);
-
-    // 11:59pm
-    sunday.setHours(23);
-    sunday.setMinutes(59);
-    sunday.setSeconds(59);
-
-    // console.log(day);
-    // console.log("prevSunday: " + sunday);  
-    return sunday;
-}
-
-/**
- * @param prevSunday : Date
- * @returns Date : the Monday after prevSunday
- */
-function monday(prevSunday: Date) : Date {
-    var day = prevSunday.getDay()
-    var mon = new Date(prevSunday.getTime());
-    var diff = 1; // # days to monday
-    mon.setDate(prevSunday.getDate() + diff);
+    var mon = new Date(date.getTime());
+    var diff = day - 1; // # days to monday
+    mon.setDate(date.getDate() - diff);
 
     // 11:59pm
     mon.setHours(23);
     mon.setMinutes(59);
     mon.setSeconds(59);
-  
-    // console.log(prevSunday);
-    // console.log("prevMonday: " + monday);  
+
+    // console.log(day);
+    // console.log("prevSunday: " + sunday);  
     return mon;
 }
 
@@ -226,7 +243,6 @@ function monday(prevSunday: Date) : Date {
 function roundTwo (num : number) : number {
     return Math.round(num * 100) / 100
 }
-
 
 /**
  * @param date
