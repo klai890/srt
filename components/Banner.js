@@ -34,9 +34,8 @@ export default function Banner() {
         </div>
         {/* Nav */}  
         <ul className={bannerStyles.nav}>
-            <li className={bannerStyles.navItem}> <Link href={'/mileage'}> CSV Mileage Export </Link></li>
-            <li className={bannerStyles.navItem}> <Link href={'/sheets'}> Google Sheets Mileage Export </Link></li>
-            <li className={bannerStyles.navItem}> <Link href={'/autoupdate'}> Auto-Update Google Sheets </Link></li>
+            <li className={bannerStyles.navItem}> <Link href={'/'}> Mileage Export </Link></li>
+            <li className={bannerStyles.navItem}> <Link href={'/autoupdate'}> Auto-Update Google Sheets</Link></li>
         </ul>
       </main>
     </>

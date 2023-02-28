@@ -8,17 +8,10 @@ import jwt from 'jsonwebtoken';
 import cookieCutter from 'cookie-cutter'
 import { getStravaData, headers } from '../lib/strava/api/mileage-csv';
 import parseGooglePath from '../utils/parseGooglePath';
-import type {GoogleUser, GoogleParams, NewSpreadsheet, StravaSession} from '../typings';
+import type {GoogleUser, GoogleParams, NewSpreadsheet} from '../typings';
 import { useSession, signIn, signOut } from "next-auth/react"
 import {CSVLink} from 'react-csv';
-import { getServerSession } from 'next-auth';
-import { getToken } from "next-auth/jwt"
-import { authOptions } from './api/auth/[...nextauth].js'
-
 import type ActivityWeek from '../lib/strava/models/ActivityWeek'
-import {formatRequests} from '../utils/sheetFormat'
-import type { GetServerSideProps, GetServerSidePropsContext, PreviewData } from "next";
-import type { NextAuthOptions } from 'next-auth'
 import { getMondays } from '../src/cache';
 import { compareWeeks } from '../lib/strava/models/ActivityWeek';
 
@@ -28,7 +21,7 @@ const SHEETS_COOKIE = 'sheets-token';
 /**
  * The component!
  */
-function Sheets(){
+export default function Sheets(){
 
   const router =  useRouter();
   const { data: session } = useSession();
@@ -126,7 +119,7 @@ function Sheets(){
     const path: string = router.asPath;
     console.log(path);
 
-    if (path === '/sheets') return;
+    if (path === '/') return;
 
     const params : GoogleParams = parseGooglePath(path);
 
@@ -393,7 +386,7 @@ function Sheets(){
       
       <div className={styles.pageHeader}>
         <h1 className={styles.h2}>Download your Mileage Log!</h1>
-        <p>A readable Google Sheet containing all your miles!</p>
+        <p>As a CSV. Coming Soon – download as a Google Sheet</p>
       </div>
 
       {/* Image Gallery – Beautiful Advertising Screenshots */}
@@ -457,11 +450,12 @@ function Sheets(){
 
                 <div className={styles.btnGrid}>
 
-                    {csvData && (
+                    {/* TODO – Comply with Google private policy. */}
+                    {/* {csvData && (
                       <button className={styles.btn} id={styles.btn2} onClick={() => exportMileage()}>
                         Export Mileage to Google Sheets
                       </button>
-                    )}
+                    )} */}
 
                     {sheetLink && (<a href={sheetLink} className={styles.link} target="_blank">Link to Generated Google Sheet</a>)}
 
@@ -523,5 +517,3 @@ function Sheets(){
     </Layout>
   )
 }
-
-export default Sheets;
