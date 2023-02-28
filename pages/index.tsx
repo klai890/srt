@@ -414,10 +414,10 @@ export default function Sheets(){
               <div className={styles.btnContainer}>
                 <div className={styles.btnContent}>
                   <p className={styles.description}>
-                    Authorize Google and Strava to use the aforementioned services!
+                    Authorize Google and Strava to use the aforementioned services! (COMING SOON!)
                   </p>
 
-                  {!googleSession && (
+                  {/* {!googleSession && (
                     <button onClick={() => googleSignIn()} className={`${styles.googleBtn} ${styles.authBtn}`}>
                       <Image
                         src="/btn_google_signin_dark_normal_web@2x.png"
@@ -426,7 +426,7 @@ export default function Sheets(){
                         height={55}
                       />
                     </button>
-                  )}
+                  )} */}
 
                   {!session && (
                     <button onClick={() => signIn()} className={`${styles.stravaBtn} ${styles.authBtn}`}>
@@ -443,10 +443,10 @@ export default function Sheets(){
         ) : (<></>)}
 
         {/* Logged in : Options */}
-        {googleSession && googleInfo &&(
+        { session && (//googleSession && googleInfo &&(
           <div className={styles.btnContainer}>
               <div className={styles.btnContent}>
-                <p className={styles.description}>Signed in through Google Sheets as {googleInfo.name}</p>
+                {/* <p className={styles.description}>Signed in through Google Sheets as {googleInfo.name}</p> */}
 
                 <div className={styles.btnGrid}>
 
@@ -476,9 +476,9 @@ export default function Sheets(){
                   )}
                   </div>
 
-                <button className={styles.btn} id={styles.btn2} onClick={() => googleSignOut()}>
+                {/* <button className={styles.btn} id={styles.btn2} onClick={() => googleSignOut()}>
                   Sign Out of Google Sheets
-                </button>
+                </button> */}
               </div>
             </div>
           </div>
