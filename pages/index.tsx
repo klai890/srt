@@ -12,7 +12,7 @@ import type {GoogleUser, GoogleParams, NewSpreadsheet} from '../typings';
 import { useSession, signIn, signOut } from "next-auth/react"
 import {CSVLink} from 'react-csv';
 import type ActivityWeek from '../lib/strava/models/ActivityWeek'
-import { getMondays } from '../src/cache';
+import { getMondays } from '../lib/strava/api/mileage-csv'
 import { compareWeeks } from '../lib/strava/models/ActivityWeek';
 
 // Name of cookie
@@ -160,7 +160,7 @@ export default function Sheets(){
     console.log("<------------------ GET SHEETS COOKIE ------------------>");
     console.log(cookieCutter.get(SHEETS_COOKIE))
 
-    router.push('/sheets');
+    router.push('/');
   }
 
   /**

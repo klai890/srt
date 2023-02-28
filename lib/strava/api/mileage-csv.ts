@@ -251,3 +251,22 @@ function activityWeekKey(date: Date) : string {
         case 6: return 'saturday'
     }
 }
+
+/**
+ * Returns an array of Mondays : Date in range bf : Date to af : Date.
+ * If af is not Monday at 11:59pm, returns the previous Monday at 11:59pm.
+ * 
+ */
+
+export function getMondays (bf: Date, af: Date) : Array<Date> {
+    var d : Date = prevMon(af);
+    const bfValue : number = bf.valueOf();
+    var result : Array<Date>= [];
+
+    while (d.valueOf() <= bfValue) {
+        result.push(new Date(d)); // create a new object. you don't want an array of references to the same object.
+        d.setDate(d.getDate() + 7)
+    }
+
+    return result;
+}
