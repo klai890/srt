@@ -29,7 +29,6 @@ type SpreadsheetProperties = {
     title?: string
 }
 
-
 export type StravaSession = {
     name?: string,
     user?: string,

@@ -51,6 +51,7 @@ export const authOptions = {
       session.accessToken = token.accessToken
       session.refreshToken = token.refreshToken
       session.error = token.error
+      session.userid = token.id + ""
       return session
     },
 

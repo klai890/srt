@@ -6,53 +6,39 @@ import { useRouter } from 'next/router'
 import React from 'react'
 import jwt from 'jsonwebtoken';
 import cookieCutter from 'cookie-cutter'
-import { formatData, headers } from '../lib/strava/api/mileage-csv';
+import { getStravaData, headers } from '../lib/strava/api/mileage-csv';
 import parseGooglePath from '../utils/parseGooglePath';
 import type {GoogleUser, GoogleParams, NewSpreadsheet, StravaSession} from '../typings';
 import { useSession, signIn, signOut } from "next-auth/react"
 import {CSVLink} from 'react-csv';
+import { getServerSession } from 'next-auth';
 import { getToken } from "next-auth/jwt"
 import { authOptions } from './api/auth/[...nextauth].js'
-import { unstable_getServerSession } from "next-auth/next"
+
 import type ActivityWeek from '../lib/strava/models/ActivityWeek'
 import {formatRequests} from '../utils/sheetFormat'
 import type { GetServerSideProps, GetServerSidePropsContext, PreviewData } from "next";
 import type { NextAuthOptions } from 'next-auth'
+import { getMondays } from '../src/cache';
+import { compareWeeks } from '../lib/strava/models/ActivityWeek';
 
 // Name of cookie
 const SHEETS_COOKIE = 'sheets-token';
 
-// Login to Strava
-// @ts-ignore
-export async function getServerSideProps(context: GetServerSidePropsContext){
-  const opts : NextAuthOptions = authOptions as NextAuthOptions;
-  const session : StravaSession = await unstable_getServerSession(context.req, context.res, opts)
-  const token = await getToken({req: context.req, secret: process.env.NEXTAUTH_SECRET});
-
-  if (token){
-
-    const data = await formatData({
-      userId: token.id, 
-      accessToken: session.accessToken, 
-      refreshToken: session.refreshToken
-    });
-    
-    return { props: { csvData : data } }
-  }
-
-  return { props: { csvData: null } }
-}
-
 /**
  * The component!
  */
-function Sheets({csvData}) {
+function Sheets(){
 
   const router =  useRouter();
   const { data: session } = useSession();
   const [googleSession, setGoogleSession] = useState<boolean>(false);
   const [googleInfo, setGoogleInfo] = useState<GoogleUser>(null);
-
+  const [csvData, setData] = useState<Array<ActivityWeek> | null>(null);
+  const [bfDate, setBfDate] = useState<Date | null>(new Date());
+  const [afDate, setAfDate] = useState<Date | null>(new Date(bfDate.valueOf() - 6*2.628e+9));
+  const [apiCalls, setApiCalls] = useState<number>(0);
+  const [sheetLink, setSheetLink] = useState<string | null>(null);
 
   const googleProfile = async () => {
     // FETCH https://www.googleapis.com/oauth2/v1/userinfo?alt=json
@@ -284,6 +270,8 @@ function Sheets({csvData}) {
       }).then(t => { return t.json() })
       .catch(err => console.error(err))
 
+      setSheetLink(`https://docs.google.com/spreadsheets/d/${sheetId}`)
+
       // TODO: ##666666 Sheet1!A1:I1
       // const sheets_post_endpoint = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}:batchUpdate`
       // console.log(formatRequests);
@@ -315,6 +303,78 @@ function Sheets({csvData}) {
   }
 
   /**
+   * Fetches activity data.
+   */
+  const fetchData = async () => {
+
+    const mondays : Array<Date> = getMondays(bfDate, afDate);
+    
+    var excludedWeeks : Array<Date> = [];
+    var data : Array<ActivityWeek> = csvData ? csvData : [];
+    for (const monday of mondays) {
+        const inArray : boolean = data.find(item => item.week === monday.toLocaleDateString()) ? true : false;
+
+        if (!inArray) {
+          const cached_response : string | null = localStorage.getItem(monday.toLocaleDateString())
+          
+          if (cached_response == null){
+            excludedWeeks.push(monday);
+          }
+
+          else {
+            data.push(JSON.parse(cached_response) as ActivityWeek)
+          }
+        }
+    }
+
+    // All dates in cache.
+    if (excludedWeeks.length == 0) {
+      data.sort(compareWeeks)
+      setData(data);
+    }
+
+    // Fetch missing weeks.
+    else {
+
+      var bf = new Date(excludedWeeks[excludedWeeks.length - 1])
+      bf.setDate(bf.getDate() + 7)
+      if (bf.valueOf() > Date.now()) bf = new Date(); // make sure it gets the entirety of the week.
+      var af = excludedWeeks[0];
+      
+      if (apiCalls < 10) {
+        const fetched_data : Array<ActivityWeek> | null = await getStravaData(
+          session.userid, 
+          session.accessToken, 
+          // not getting the last week because using the mondays.
+          bf, 
+          af
+        );
+  
+        setApiCalls(apiCalls + 5);
+        
+        // Add to local storage.
+        if (fetched_data != null){
+          fetched_data.forEach(wk => localStorage.setItem(wk.week, JSON.stringify(wk)));
+          data = data.concat(fetched_data);
+          data.sort(compareWeeks)
+          setData(data);
+        }
+      }
+
+      else {
+        alert("API calls has surpassed 10. Sorry!")
+      }
+    }
+    
+  }
+
+  const updateData = async () => {
+    setBfDate(afDate)
+    setAfDate(new Date(bfDate.valueOf() - 6*2.628e+9))
+    fetchData()
+  }
+
+ /**
    * The function equivalent on componentOnMount
    * Store JWT token in session, setSession
    */
@@ -401,8 +461,26 @@ function Sheets({csvData}) {
                       <button className={styles.btn} id={styles.btn2} onClick={() => exportMileage()}>
                         Export Mileage to Google Sheets
                       </button>
-
                     )}
+
+                    {sheetLink && (<a href={sheetLink} className={styles.link} target="_blank">Link to Generated Google Sheet</a>)}
+
+                  <h3>Select additional date ranges to export</h3>
+
+                  <label><strong>Date time picker</strong></label>
+
+                  <p>
+                  <button onClick={e => updateData()}> Generate Previous 6 Months </button>
+
+                  </p>
+
+
+                  {/* Preview Data */}
+                  <div>
+                  {csvData != null && csvData.map((week, id) => 
+                      <div key={id}>Week of: {week.week} : {week.mileage}</div>
+                  )}
+                  </div>
 
                 <button className={styles.btn} id={styles.btn2} onClick={() => googleSignOut()}>
                   Sign Out of Google Sheets

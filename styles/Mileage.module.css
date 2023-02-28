@@ -9,6 +9,11 @@
     line-height: 2.4rem;
 }
 
+.link {
+    color: blue;
+    text-decoration: underline;
+}
+
 .gallery {
     margin: 1rem;
     text-align: center;
