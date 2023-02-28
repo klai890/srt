@@ -1,7 +1,6 @@
 /**
- * Created Jan 04, 2023
- * Creates an API call to retrieve Strava data and exports it in a CSV-ready format
- * through variable csvData : Array<ActivityWeek>
+ * /lib/strava/api/utils.ts
+ * Contains functions to help with fetching & parsing date from Strava.
  */
 
 import ActivityWeek from '../models/ActivityWeek';
@@ -9,7 +8,7 @@ import SummaryActivity from '../models/SummaryActivity';
 import Activity from "../models/Activity";
 
 const PER_PAGE = 200; // # activities per page
-const MAX_CALLS = 5;
+export const MAX_CALLS = 10;
 
 export var headers = [
     {label: 'Week Of', key: 'week'},
@@ -22,35 +21,6 @@ export var headers = [
     {label: 'Sunday', key: 'sunday'},
     {label: 'Mileage', key: 'mileage'}
 ]
-
-/**
- * 
- * @param csvTable CSV Table to modify
- * @param oldest Oldest date in the table.
- * @param newest Newest date in the table.
- */
-function setupCsvTable (csvTable : Array<ActivityWeek>, oldest: Date, newest: Date) : void { 
-    var d : Date = new Date(oldest);
-    var wk : ActivityWeek;
-    
-    // Add each Monday to table
-    while (d <= newest) {
-        wk = {
-            'week': d.toLocaleDateString(), // ex: 1/6/2023
-            'monday': 0,
-            'tuesday': 0,
-            'wednesday': 0,
-            'thursday': 0,
-            'friday': 0,
-            'saturday': 0,
-            'sunday': 0,
-            'mileage': 0
-        }
-
-        csvTable.push(wk); // should update obj in orig func, if like Java.
-        d.setDate(d.getDate() + 7)
-    }
-}
 
 /**
  * @params userId: The Strava user's id
@@ -69,12 +39,6 @@ export const getStravaData = async function(userId, accessToken, before: Date, a
     // Setup Table
     var csvTable : Array<ActivityWeek> = [];
     setupCsvTable(csvTable, prevMon(after), prevMon(before))
-
-    console.log("<---------------- SET UP CSV TABLE ------------------>");
-    console.log(csvTable);
-    
-    
-    
 
     // https://groups.google.com/g/strava-api/c/KiQo6sVlWG4: before & after params must be in seconds
     const bf : number = Math.trunc(before.valueOf() / 1000)
@@ -114,7 +78,7 @@ export const getStravaData = async function(userId, accessToken, before: Date, a
     }
 
     if (i == MAX_CALLS) {
-        alert("Max calls reached");
+        alert("Max calls reached. Data may not be accurate. Sorry!");
     }
 
     csvTable = addData(responses, csvTable);
@@ -128,7 +92,6 @@ export const getStravaData = async function(userId, accessToken, before: Date, a
  */
 export const activityMileage = async function (activityId, accessToken) {
   // <------------------------- RETRIEVE CREDENTIALS ---------------------------->
-    // console.log(userId); console.log(accessToken); console.log(refreshToken);
     const ATHLETES_ENDPOINT = `https://www.strava.com/api/v3/activities/${activityId}?include_all_efforts=false`;
     
     // <------------------------- RETRIEVE ACTIVITY DATA ------------------------------------
@@ -139,15 +102,48 @@ export const activityMileage = async function (activityId, accessToken) {
         }
     }).then(t => t.json())
     .catch(err => console.error(err))
-    
-    console.log("<-------------------------ACTIVITY------------------------->")
-    console.log(data);
 
     const distance = data.distance * 0.000621371192; // meters to miles
     return distance;
 }
 
 // <--------------------- HELPER FUNCTIONS ----------------------->
+
+/**
+ * 
+ * @param csvTable CSV Table to modify
+ * @param oldest Oldest date in the table.
+ * @param newest Newest date in the table.
+ */
+function setupCsvTable (csvTable : Array<ActivityWeek>, oldest: Date, newest: Date) : void { 
+    var d : Date = new Date(oldest);
+    var wk : ActivityWeek;
+    
+    // Add each Monday to table
+    while (d <= newest) {
+        wk = {
+            'week': d.toLocaleDateString(), // ex: 1/6/2023
+            'monday': 0,
+            'tuesday': 0,
+            'wednesday': 0,
+            'thursday': 0,
+            'friday': 0,
+            'saturday': 0,
+            'sunday': 0,
+            'mileage': 0
+        }
+
+        csvTable.push(wk); // should update obj in orig func, if like Java.
+        d.setDate(d.getDate() + 7)
+    }
+}
+
+/**
+ * addData: Parses data and adds it to an array of parsed data.
+ * @param json Array<SummaryActivity> to add
+ * @param csvTable The table to add json to.
+ * @returns Array<ActivityWeek> The updated CSV Table
+ */
 function addData(json : Array<SummaryActivity>, csvTable : Array<ActivityWeek>) : Array<ActivityWeek>{
 
     // pop from existing data, add to csvTable
@@ -166,10 +162,6 @@ function addData(json : Array<SummaryActivity>, csvTable : Array<ActivityWeek>) 
         }
 
         else {
-            console.log("<---------- NOT IN CSV TABLE ---------------->");
-            console.log(week);
-            
-            
             alert("ERROR: Week was not in CSV table.")
         }
     }
@@ -178,14 +170,12 @@ function addData(json : Array<SummaryActivity>, csvTable : Array<ActivityWeek>) 
 }
 
 /**
- * 
+ * pretitfy(): Extracts relevant data from the long-ass fetch response.
  * @param json : Data retrieved from Strava
  * @returns array of SummaryActivity : A condensed version
  */
 function prettify (json: Array<Activity>) : Array<SummaryActivity> {
     if (!json) return [];
-    console.log("<-------------- JSON ------------->");
-    console.log(json);
     
     // first, get only running activities
     json = json.filter ( activity => activity.type == 'Run');
@@ -205,8 +195,9 @@ function prettify (json: Array<Activity>) : Array<SummaryActivity> {
   }  
 
 /**
+ * prevMon(): Retrieves the Monday before a date.
  * @param date: Date 
- * @returns Date: sunday, the Sunday prior to date @ 11:59pm
+ * @returns Date: Monday, the Monday prior to date @ 11:59pm
  */
 export function prevMon(date: Date) : Date {    
 
@@ -222,12 +213,11 @@ export function prevMon(date: Date) : Date {
     mon.setMinutes(0);
     mon.setSeconds(0);
 
-    // console.log(day);
-    // console.log("prevSunday: " + sunday);  
     return mon;
 }
 
 /**
+ * Rounds num to 2 decimal places.
  * @param num 
  * @returns num rounded to 2 decimal places
  */
@@ -236,6 +226,7 @@ function roundTwo (num : number) : number {
 }
 
 /**
+ * activityWeekKey(): Converts an integer from 0-6 to a day of week. 
  * @param date
  * @returns string: the corresponding key in ActivityWeek
  */
@@ -251,13 +242,12 @@ function activityWeekKey(date: Date) : string {
         case 6: return 'saturday'
     }
 }
-
 /**
- * Returns an array of Mondays : Date in range bf : Date to af : Date.
- * If af is not Monday at 11:59pm, returns the previous Monday at 11:59pm.
- * 
+ * Returns an Array of mondays between af and bf.
+ * @param bf Date to stop at
+ * @param af Date to start at
+ * @returns An Array of Mondays between af and bf
  */
-
 export function getMondays (bf: Date, af: Date) : Array<Date> {
     var d : Date = prevMon(af);
     const bfValue : number = bf.valueOf();

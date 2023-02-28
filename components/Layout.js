@@ -1,7 +1,6 @@
 import Metadata from '../components/Metadata';
 import { Inter } from '@next/font/google'
 import styles from '../styles/components/Layout.module.css'
-import Link from 'next/link';
 import Banner from '../components/Banner';
 import Footer from '../components/Footer';
 

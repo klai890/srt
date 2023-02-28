@@ -6,13 +6,13 @@ import { useRouter } from 'next/router'
 import React from 'react'
 import jwt from 'jsonwebtoken';
 import cookieCutter from 'cookie-cutter'
-import { getStravaData, headers } from '../lib/strava/api/mileage-csv';
+import { getStravaData, headers, MAX_CALLS } from '../lib/strava/api/utils';
 import parseGooglePath from '../utils/parseGooglePath';
 import type {GoogleUser, GoogleParams, NewSpreadsheet} from '../typings';
 import { useSession, signIn, signOut } from "next-auth/react"
 import {CSVLink} from 'react-csv';
 import type ActivityWeek from '../lib/strava/models/ActivityWeek'
-import { getMondays } from '../lib/strava/api/mileage-csv'
+import { getMondays } from '../lib/strava/api/utils'
 import { compareWeeks } from '../lib/strava/models/ActivityWeek';
 
 // Name of cookie
@@ -62,9 +62,6 @@ export default function Sheets(){
       }
     }).then(t => t.json())
 
-    console.log("<-------------------- THE RESPONSE ------------------------------>");
-    console.log(res);
-
     setGoogleInfo(res);
 
   }
@@ -113,18 +110,12 @@ export default function Sheets(){
   const storeTokens = async() => {
 
     // 1. Extract Params
-    console.log('<-------------- ROUTER.asPATH-------------------------->')
-    console.log(router.asPath);
-    
     const path: string = router.asPath;
     console.log(path);
 
     if (path === '/') return;
 
     const params : GoogleParams = parseGooglePath(path);
-
-    console.log('<----------------------- PARAMS ------------------------->');
-    console.log(params);
     
     // 2. Use params to create a JWT token
     
@@ -264,34 +255,6 @@ export default function Sheets(){
       .catch(err => console.error(err))
 
       setSheetLink(`https://docs.google.com/spreadsheets/d/${sheetId}`)
-
-      // TODO: ##666666 Sheet1!A1:I1
-      // const sheets_post_endpoint = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}:batchUpdate`
-      // console.log(formatRequests);
-
-      // const postRes = await fetch(sheets_post_endpoint, {
-      //   method: 'POST', 
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //     'Authorization': `Bearer ${access_token}`
-      //   },
-      //   body: JSON.stringify({
-      //     requests: formatRequests
-      //   })
-      // }).then(t => { return t.json() })
-      // .catch(err => console.error(err))
-  
-      // console.log("<-------------------- POST RESPONSE ------------------------------>");
-      // console.log(postRes);
-
-
-      // TODO: ##ff6d01 Sheet1!A2:A{len}
-
-      // TODO: ##ff6d01 Sheet1!I2:I{len}
-
-      // TODO: format:center Sheet1!A1:I{len}
-
-      // TODO: User message
     }
   }
 
@@ -334,7 +297,8 @@ export default function Sheets(){
       if (bf.valueOf() > Date.now()) bf = new Date(); // make sure it gets the entirety of the week.
       var af = excludedWeeks[0];
       
-      if (apiCalls < 10) {
+      if (apiCalls < MAX_CALLS * 2) {
+
         const fetched_data : Array<ActivityWeek> | null = await getStravaData(
           session.userid, 
           session.accessToken, 
@@ -355,7 +319,7 @@ export default function Sheets(){
       }
 
       else {
-        alert("API calls has surpassed 10. Sorry!")
+        alert("API calls has surpassed the maximum. Sorry!")
       }
     }
     
@@ -414,7 +378,7 @@ export default function Sheets(){
               <div className={styles.btnContainer}>
                 <div className={styles.btnContent}>
                   <p className={styles.description}>
-                    Authorize Google and Strava to use the aforementioned services! (COMING SOON!)
+                    Authorize Strava to use the aforementioned services!
                   </p>
 
                   {/* {!googleSession && (
@@ -465,7 +429,11 @@ export default function Sheets(){
 
                   <p>
                   <button onClick={e => updateData()}> Generate Previous 6 Months </button>
+                  </p>
 
+                  <p>
+                    Please be patient, this may take up to 10 seconds because data fetching
+                    from Strava takes some time!
                   </p>
 
 
