@@ -6,5 +6,3 @@ Inspired by [Toolbox for Strava](https://www.marcellobrivio.com/projects/strava-
   - Export mileage log in a format that you can actually read!
 - Change default activity names!
   - Because "Afternoon Run" is just boring!
- 
-## Release Date: January 27th, 2023!
