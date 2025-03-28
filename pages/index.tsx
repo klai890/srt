@@ -18,6 +18,9 @@ import { compareWeeks } from '../lib/strava/models/ActivityWeek';
 // Name of cookie
 const SHEETS_COOKIE = 'sheets-token';
 
+// Six months in miliseconds
+const SIX_MONTHS = 6*2.628e+9;
+
 /**
  * The component!
  */
@@ -28,8 +31,12 @@ export default function Sheets(){
   const [googleSession, setGoogleSession] = useState<boolean>(false);
   const [googleInfo, setGoogleInfo] = useState<GoogleUser>(null);
   const [csvData, setData] = useState<Array<ActivityWeek> | null>(null);
+
+  // bfDate initialized to today (because we want all the activities before that date)
+  // afDate initialized to six months before today
   const [bfDate, setBfDate] = useState<Date | null>(new Date());
-  const [afDate, setAfDate] = useState<Date | null>(new Date(bfDate.valueOf() - 6*2.628e+9));
+  const [afDate, setAfDate] = useState<Date | null>(new Date(bfDate.valueOf() - SIX_MONTHS));
+  
   const [apiCalls, setApiCalls] = useState<number>(0);
   const [sheetLink, setSheetLink] = useState<string | null>(null);
 
@@ -327,7 +334,9 @@ export default function Sheets(){
 
   const updateData = async () => {
     setBfDate(afDate)
-    setAfDate(new Date(bfDate.valueOf() - 6*2.628e+9))
+
+    // Set afDate to six months after bfDate
+    setAfDate(new Date(bfDate.valueOf() - SIX_MONTHS))
     fetchData()
   }
 
@@ -350,7 +359,7 @@ export default function Sheets(){
       
       <div className={styles.pageHeader}>
         <h1 className={styles.h2}>Download your Mileage Log!</h1>
-        <p>As a CSV. Coming Soon – download as a Google Sheet</p>
+        <p>Download the previous 6 month's worth of mileage as a CSV file! </p>
       </div>
 
       {/* Image Gallery – Beautiful Advertising Screenshots */}
@@ -423,26 +432,14 @@ export default function Sheets(){
 
                     {sheetLink && (<a href={sheetLink} className={styles.link} target="_blank">Link to Generated Google Sheet</a>)}
 
-                  <h3>Select additional date ranges to export</h3>
-
-                  <label><strong>Date time picker</strong></label>
-
                   <p>
-                  <button onClick={e => updateData()}> Generate Previous 6 Months </button>
+                  <button className={styles.btn2} onClick={e => updateData()}> Generate Previous 6 Months </button>
                   </p>
 
                   <p>
                     Please be patient, this may take up to 10 seconds because data fetching
                     from Strava takes some time!
                   </p>
-
-
-                  {/* Preview Data */}
-                  <div>
-                  {csvData != null && csvData.map((week, id) => 
-                      <div key={id}>Week of: {week.week} : {week.mileage}</div>
-                  )}
-                  </div>
 
                 {/* <button className={styles.btn} id={styles.btn2} onClick={() => googleSignOut()}>
                   Sign Out of Google Sheets

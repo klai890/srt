@@ -34,7 +34,6 @@ export var headers = [
  * Retrieves data between Date after and Date before.
  */
 export const getStravaData = async function(userId, accessToken, before: Date, after: Date) {
-    // if (after.valueOf() > Date.now()) after = new Date();
 
     // Setup Table
     var csvTable : Array<ActivityWeek> = [];
