@@ -45,7 +45,7 @@ export const getStravaData = async function(userId, accessToken, before: Date, a
     const af : number = Math.trunc(after.valueOf() / 1000)
     const ATHLETES_ENDPOINT = `https://www.strava.com/api/v3/athletes/${userId}`;
     
-    // epoch: https://www.epochconverter.com/
+    // epoch: https://www.epochconverter.com
     // max per page seems to be 200
     
     // <------------------------- RETRIEVE ACTIVITY DATA ------------------------------------>
@@ -201,11 +201,12 @@ function prettify (json: Array<Activity>) : Array<SummaryActivity> {
  */
 export function prevMon(date: Date) : Date {    
 
-    var day : number = date.getDay()
+    // day: 0 to 6, with 0 as Sunday, 6 as Saturday
+    var day : number = date.getDay() == 0 ? 7 : date.getDay()
     var mon = new Date(date.getTime());
 
     // TODO: small bug – if it's monday but before 11:59pm, prevMon is actually AFTER date.
-    var diff = day - 1; // # days to monday
+    var diff = day - 1; // Days to the previous monday
     mon.setDate(date.getDate() - diff);
 
     // 11:59pm
