@@ -36,6 +36,7 @@ export default function Banner() {
         <ul className={bannerStyles.nav}>
             <li className={bannerStyles.navItem}> <Link href={'/'}> Mileage Export </Link></li>
             <li className={bannerStyles.navItem}> <Link href={'/autoupdate'}> Auto-Update Google Sheets</Link></li>
+            <li className={bannerStyles.navItem}> <Link href={'/mileageplot'}> Mileage Plot</Link></li>
         </ul>
       </main>
     </>
