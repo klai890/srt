@@ -28,8 +28,10 @@ export default function Sheets(){
 
   const router =  useRouter();
   const { data: session } = useSession();
+
   const [googleSession, setGoogleSession] = useState<boolean>(false);
   const [googleInfo, setGoogleInfo] = useState<GoogleUser>(null);
+
   const [csvData, setData] = useState<Array<ActivityWeek> | null>(null);
 
   // bfDate initialized to today (because we want all the activities before that date)
@@ -274,19 +276,48 @@ export default function Sheets(){
     
     var excludedWeeks : Array<Date> = [];
     var data : Array<ActivityWeek> = csvData ? csvData : [];
+    console.log("Data: ", data)
+
     for (const monday of mondays) {
+
+        console.log("data: ", data)
+
         const inArray : boolean = data.find(item => item.week === monday.toLocaleDateString()) ? true : false;
 
+        // Check if we have data stored. If not, we have to fetch it.
+        if (inArray) { console.log("In array") }
         if (!inArray) {
-          const cached_response : string | null = localStorage.getItem(monday.toLocaleDateString())
-          
-          if (cached_response == null){
-            excludedWeeks.push(monday);
-          }
+          console.log("Not in array")
+          try {
+            const response = await fetch('/api/getTrainingData', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                strava_id: session.userid,
+                week_start: monday
+              })
+            })
 
-          else {
-            data.push(JSON.parse(cached_response) as ActivityWeek)
+            const res = await response.json();
+
+            if (res['error']) throw Error(res.error);
+
+            const res_data : ActivityWeek = res;
+
+            console.log("Successfully fetched data: ", res_data)
+            console.log("Figure out how to push to data lol")
+
+            data.push(res_data);
+
+            console.log("Updated data: ", data)
+
           }
+          catch (error) {
+            console.log("Error", error)
+            excludedWeeks.push(monday);
+          }          
         }
     }
 
@@ -318,7 +349,32 @@ export default function Sheets(){
         
         // Add to local storage.
         if (fetched_data != null){
-          fetched_data.forEach(wk => localStorage.setItem(wk.week, JSON.stringify(wk)));
+
+          fetched_data.forEach(async wk => {
+            try {
+                const response = await fetch('/api/storeTrainingData', {
+                  method: 'POST',
+                  headers: {
+                      'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    strava_id: session.userid,
+                    week_start: wk.week,
+                    activity_week: wk
+                  }),
+                  
+              });
+
+              const res = await response.json();
+              console.log("Success:", res.data);
+            }
+
+            catch( error ){
+              console.error("Error saving training data");
+            }
+            
+          })
+
           data = data.concat(fetched_data);
           data.sort(compareWeeks)
           setData(data);

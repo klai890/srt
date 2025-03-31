@@ -36,3 +36,10 @@ Spreadsheet.json
 
 # Notes
 *.txt
+
+# supabase
+/supabase
+database.types.ts
+
+# vs code
+.vscode
