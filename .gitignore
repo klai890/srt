@@ -39,7 +39,7 @@ Spreadsheet.json
 
 # supabase
 /supabase
-database.types.ts
+# database.types.ts
 
 # vs code
 .vscode
