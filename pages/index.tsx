@@ -6,20 +6,19 @@ import { useRouter } from 'next/router'
 import React from 'react'
 import jwt from 'jsonwebtoken';
 import cookieCutter from 'cookie-cutter'
-import { getStravaData, headers, MAX_CALLS } from '../lib/strava/api/utils';
+import { SIX_MONTHS, THREE_MONTHS, ONE_WEEK, activityWeekKey, getPlotData,
+        getStravaData, headers, MAX_CALLS, prevMon, getMondays } from '../lib/strava/api/utils';
 import parseGooglePath from '../utils/parseGooglePath';
 import type {GoogleUser, GoogleParams, NewSpreadsheet} from '../typings';
 import { useSession, signIn, signOut } from "next-auth/react"
 import {CSVLink} from 'react-csv';
 import type ActivityWeek from '../lib/strava/models/ActivityWeek'
-import { getMondays } from '../lib/strava/api/utils'
 import { compareWeeks } from '../lib/strava/models/ActivityWeek';
+import MileagePoint from '../lib/strava/models/MileagePoint';
+import PlotChart from '../sections/PlotChart';
 
 // Name of cookie
 const SHEETS_COOKIE = 'sheets-token';
-
-// Six months in miliseconds
-const SIX_MONTHS = 6*2.628e+9;
 
 /**
  * The component!
@@ -41,6 +40,9 @@ export default function Sheets(){
   
   const [apiCalls, setApiCalls] = useState<number>(0);
   const [sheetLink, setSheetLink] = useState<string | null>(null);
+
+  // Data for chronic load mileage plot
+  const [plotData, setPlotData] = useState<Array<MileagePoint> |null>(null);
 
   const googleProfile = async () => {
     // FETCH https://www.googleapis.com/oauth2/v1/userinfo?alt=json
@@ -282,13 +284,17 @@ export default function Sheets(){
 
         console.log("data: ", data)
 
+        // Check if we already have data for monday's week.
         const inArray : boolean = data.find(item => item.week === monday.toLocaleDateString()) ? true : false;
 
         // Check if we have data stored. If not, we have to fetch it.
-        if (inArray) { console.log("In array") }
+
         if (!inArray) {
           console.log("Not in array")
+
           try {
+
+            // Try retrieving from databse
             const response = await fetch('/api/getTrainingData', {
               method: 'POST',
               headers: {
@@ -305,16 +311,11 @@ export default function Sheets(){
             if (res['error']) throw Error(res.error);
 
             const res_data : ActivityWeek = res;
-
-            console.log("Successfully fetched data: ", res_data)
-            console.log("Figure out how to push to data lol")
-
             data.push(res_data);
-
-            console.log("Updated data: ", data)
 
           }
           catch (error) {
+            // Not in database, must fetch from Strava & store in database.
             console.log("Error", error)
             excludedWeeks.push(monday);
           }          
@@ -347,10 +348,11 @@ export default function Sheets(){
   
         setApiCalls(apiCalls + 5);
         
-        // Add to local storage.
+        // Add to database
         if (fetched_data != null){
 
           fetched_data.forEach(async wk => {
+
             try {
                 const response = await fetch('/api/storeTrainingData', {
                   method: 'POST',
@@ -385,7 +387,17 @@ export default function Sheets(){
         alert("API calls has surpassed the maximum. Sorry!")
       }
     }
-    
+
+    // Massage csvData into plotData
+
+    // The first and last date that we provide "acute load" data for
+    var firstDate : Date = new Date(bfDate.valueOf() - THREE_MONTHS);
+    var lastDate : Date = new Date(bfDate.valueOf());
+
+    console.log("Final csvData:", csvData)
+    var mileagePoints : Array<MileagePoint> = getPlotData(firstDate, lastDate, data);
+    setPlotData(mileagePoints);
+
   }
 
   const updateData = async () => {
@@ -508,6 +520,22 @@ export default function Sheets(){
 
         {/* Logged in : Options */}
         {session && (
+          <div>
+            <div className={styles.plot}>
+
+              {plotData && (
+                // plotData.map((point, index) => (
+                //   <div key={index} className={styles.plotPoint}>
+                //     <p>{point.day.toLocaleDateString()}</p>
+                //     <p>{point.value}</p>
+                //   </div>
+                // ))
+                <div className={styles.plotContainer}>
+                  <PlotChart plotData={plotData} />
+                </div>
+              )}
+
+            </div>
             <div className={styles.btnContainer}>
               <div className={styles.btnContent}>      
                 <p className={styles.description}>Signed in through Strava as {session.user.toString()}</p>
@@ -529,7 +557,9 @@ export default function Sheets(){
                   Sign Out of Strava
                 </button>
               </div>
+
             </div>
+        </div>
         </div>
 
         )}
