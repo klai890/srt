@@ -31,7 +31,7 @@ export default async function getTrainingData(req : NextApiRequest, res: NextApi
     }    
 
     const activityWeek: ActivityWeek = {
-        week: data.week_start, // Rename `week_start` to `week`
+        week: (new Date(data.week_start + 'T00:00:00')).toLocaleDateString(), // Rename `week_start` to `week`
         monday: data.monday,
         tuesday: data.tuesday,
         wednesday: data.wednesday,
