@@ -21,11 +21,15 @@
     align-items: center;
 }
 
-/* Mileage Button Styles */
-.btnContainer {
-    display: flex;
-    text-align: center;
-    justify-content: center;
+.mainContainer {
+  display: grid;
+  grid-template-columns: 20% 80%;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  min-height: 800px;
 }
 
 .plotContainer{
@@ -35,6 +39,46 @@
     flex-direction:column;
     margin: 3rem;
 }
+
+.menuContainer {
+    height: 100%;
+    border: 1px solid #eeeeee;
+    border-radius: 8px;
+    background: rgba(252, 77, 2, 0.913);
+    background: #eeeeee;
+    padding: 1rem 0.2rem 0.2rem 0.2rem;
+}
+
+.menuContainer .menuHeader {
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin: 1rem 0 1rem 0;
+    color: black;
+}
+
+.menuContainer .menuItem {
+    text-align: center;
+    padding: 4px;
+    border: 2px solid #fc4c02;
+    border-radius: 8px;
+    margin: 8px;
+    color: #fc4c02;
+}
+
+
+.menuContainer .menuItem:hover {
+    cursor: pointer;
+    background-color: #ddd;
+}
+
+/* Mileage Button Styles */
+.btnContainer {
+    display: flex;
+    text-align: center;
+    justify-content: center;
+}
+
 
 .btnContent {
     margin-top: 2rem;

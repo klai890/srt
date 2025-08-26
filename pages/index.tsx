@@ -4,9 +4,8 @@ import Image from 'next/image';
 import { useState } from 'react';
 import React from 'react'
 import { SIX_MONTHS, THREE_MONTHS, getPlotData,
-        getStravaData, headers, MAX_CALLS, getMondays } from '../lib/strava/api/utils';
+        getStravaData, MAX_CALLS, getMondays } from '../lib/strava/api/utils';
 import { useSession, signIn, signOut } from "next-auth/react"
-import {CSVLink} from 'react-csv';
 import type ActivityWeek from '../lib/strava/models/ActivityWeek'
 import { compareWeeks } from '../lib/strava/models/ActivityWeek';
 import MileagePoint from '../lib/strava/models/MileagePoint';
@@ -17,37 +16,29 @@ export default function Sheets(){
   const { data: session } = useSession();
   const [csvData, setData] = useState<Array<ActivityWeek> | null>(null);
   const [apiCalls, setApiCalls] = useState<number>(0);
-  const [plotData, setPlotData] = useState<Array<MileagePoint> |null>(null);
-
+  
   const [bfDate, setBfDate] = useState<Date | null>(new Date()); // today
   const [afDate, setAfDate] = useState<Date | null>(new Date(bfDate.valueOf() - SIX_MONTHS)); // 6 months ago
+  
+  const [viz, setViz] = useState<number>(0);
+  const [weekMileagePlotData, setWeekMileagePlotData] = useState<Array<MileagePoint> |null>(null);
+  // const [monthMileagePlotData, setMonthMileagePlotData] = useState<Array<MonthMileagePoint> |null>(null);
+  // const [dists, setDists] = useState<Array<MonthMileagePoint> |null>(null);
 
-  /**
-   * Fetches activity data.
-   */
+  // Fetch activity from database and/or Strava
   const fetchData = async () => {
-
     const mondays : Array<Date> = getMondays(bfDate, afDate);
     
     var excludedWeeks : Array<Date> = [];
     var data : Array<ActivityWeek> = csvData ? csvData : [];
-    console.log("Data: ", data)
 
     for (const monday of mondays) {
-
-        console.log("data: ", data)
-
         // Check if we already have data for monday's week.
         const inArray : boolean = data.find(item => item.week === monday.toLocaleDateString()) ? true : false;
 
-        // Check if we have data stored. If not, we have to fetch it.
-
+        // Try retrieving from database, before fetching from Strava
         if (!inArray) {
-          console.log("Not in array")
-
           try {
-
-            // Try retrieving from databse
             const response = await fetch('/api/getTrainingData', {
               method: 'POST',
               headers: {
@@ -65,25 +56,23 @@ export default function Sheets(){
 
             const res_data : ActivityWeek = res;
             data.push(res_data);
-
           }
           catch (error) {
             // Not in database, must fetch from Strava & store in database.
-            console.log("Error", error)
+            console.error("Error", error)
             excludedWeeks.push(monday);
           }          
         }
     }
 
-    // All dates in cache.
+    // All dates cached.
     if (excludedWeeks.length == 0) {
       data.sort(compareWeeks)
       setData(data);
     }
 
-    // Fetch missing weeks.
+    // Fetch missing data from Strava
     else {
-
       var bf = new Date(excludedWeeks[excludedWeeks.length - 1])
       bf.setDate(bf.getDate() + 7)
       if (bf.valueOf() > Date.now()) bf = new Date(); // make sure it gets the entirety of the week.
@@ -94,7 +83,6 @@ export default function Sheets(){
         const fetched_data : Array<ActivityWeek> | null = await getStravaData(
           session.userid, 
           session.accessToken, 
-          // not getting the last week because using the mondays.
           bf, 
           af
         );
@@ -121,7 +109,6 @@ export default function Sheets(){
               });
 
               const res = await response.json();
-              console.log("Success:", res.data);
             }
 
             catch( error ){
@@ -141,138 +128,78 @@ export default function Sheets(){
       }
     }
 
-    // Massage csvData into plotData
-
     // The first and last date that we provide "acute load" data for
     var firstDate : Date = new Date(bfDate.valueOf() - THREE_MONTHS);
     var lastDate : Date = new Date(bfDate.valueOf());
 
-    console.log("Final csvData:", csvData)
-    var mileagePoints : Array<MileagePoint> = getPlotData(firstDate, lastDate, data);
-    setPlotData(mileagePoints);
-
+    var weekMileagePoints : Array<MileagePoint> = getPlotData(firstDate, lastDate, data);
+    setWeekMileagePlotData(weekMileagePoints);
   }
 
   const updateData = async () => {
     setBfDate(afDate)
-
-    // Set afDate to six months after bfDate
     setAfDate(new Date(bfDate.valueOf() - SIX_MONTHS))
     fetchData()
   }
 
   return (
     <Layout>
-      
-      <div className={styles.pageHeader}>
-        <h1 className={styles.h2}>Download your Mileage Log!</h1>
-        <p>Download the previous 6 month's worth of mileage as a CSV file! </p>
-      </div>
+      {/* Not logged in : Prompt */}
+      { session == undefined ? (
+        <div className={styles.btnContainer}>
+          <div className={styles.btnContent}>
+            <p className={styles.description}>Authorize Strava to use the aforementioned services!</p>
 
-      {/* Image Gallery – Beautiful Advertising Screenshots */}
-      <div className={styles.gallery}>
-        <Image
-          className={styles.sheetsWidescreen}
-          src="/sheets.png"
-          alt="Image of CSV File"
-          width={909}
-          height={253}
-          priority
-        />
-        <Image
-          className={styles.sheetsMobile}
-          src="/sheets-mobile.png"
-          alt="Image of CSV File"
-          width={336}
-          height={166}
-          priority
-        />
-      </div>
-
-        {/* Not logged in : Prompt */}
-        { session == undefined ? (
-              <div className={styles.btnContainer}>
-                <div className={styles.btnContent}>
-                  <p className={styles.description}>
-                    Authorize Strava to use the aforementioned services!
-                  </p>
-
-                  {!session && (
-                    <button onClick={() => signIn()} className={`${styles.stravaBtn} ${styles.authBtn}`}>
-                      <Image
-                        src="/btn_strava_connectwith_orange.svg"
-                        alt="Connect with Strava"
-                        width={225}
-                        height={55}
-                      />
-                    </button>
-                  )}
-            </div>
+            {!session && (
+              <button onClick={() => signIn()} className={`${styles.stravaBtn} ${styles.authBtn}`}>
+                <Image
+                  src="/btn_strava_connectwith_orange.svg"
+                  alt="Connect with Strava"
+                  width={225}
+                  height={55}
+                />
+              </button>
+            )}
           </div>
-        ) : (<></>)}
+        </div>
+      ) : (<></>)}
 
-        {/* Logged in : Options */}
-        { session && (
-          <div className={styles.btnContainer}>
-              <div className={styles.btnContent}>
-                <div className={styles.btnGrid}>
-                  <p>
-                  <button className={styles.btn2} onClick={e => updateData()}> Generate Previous 6 Months </button>
-                  </p>
 
-                  <p>
-                    Please be patient, this may take up to 10 seconds because data fetching
-                    from Strava takes some time!
-                  </p>
-
-              </div>
+      {/* Logged in : Options */}
+      {session && (
+        <div>
+          <div className={styles.mainContainer}>
+            {/* Left-side menu to select visualizations */}
+            <div className={styles.menuContainer}>
+              <h2 className={styles.menuHeader}> Visualizations </h2>
+              <p className={styles.menuItem} onClick={()=>setViz(0)}>Weekly Mileage Plot</p>
+              <p className={styles.menuItem} onClick={()=>setViz(1)}>Monthly Mileage Plot</p>
+              <p className={styles.menuItem} onClick={()=>setViz(2)}>Histogram of Run Distances</p>
+              <p className={styles.menuItem} onClick={()=>setViz(3)}>Calendar Heatmap</p>
+              <p className={styles.menuItem} onClick={()=>setViz(4)}>Fun Facts</p>
             </div>
-          </div>
 
-        )}
-
-        {/* Logged in : Options */}
-        {session && (
-          <div>
-            <div className={styles.plot}>
-
-              {plotData && (
-                <>
-                <div className={styles.plotContainer}>
-                  <PlotChart plotData={plotData} />
-                </div>
-                  </>
+            {/* Right-side content area to view visualizations */}
+            <div className={styles.plotContainer}>
+              {viz == 0 && weekMileagePlotData && (
+                <PlotChart plotData={weekMileagePlotData} />
               )}
-
             </div>
-            <div className={styles.btnContainer}>
-              <div className={styles.btnContent}>      
-                <p className={styles.description}>Signed in through Strava as {session.user.toString()}</p>
+          </div>
+          
 
-                <div className={styles.btnGrid}>
-
-                    {csvData && (
-                        <CSVLink 
-                          data={csvData} 
-                          headers={headers}
-                          filename={"mileage.csv"}
-                          className={styles.btn}
-                        >
-                          Export Mileage as CSV
-                        </CSVLink>
-                    )}
-
-                <button className={styles.btn} id={styles.btn2} onClick={() => signOut()}>
-                  Sign Out of Strava
-                </button>
-              </div>
-
+          {/* Sign out */}
+          <div className={styles.btnContainer}>
+              <div className={styles.btnGrid}>
+                <p>Signed in through Strava as {session.user.toString()}</p>
+                <button className={styles.btn2} onClick={e => updateData()}> Download Data from Previous 6 Months </button>
+                <button className={styles.btn} id={styles.btn2} onClick={() => signOut()}>Sign Out of Strava</button>
             </div>
-        </div>
+          </div>
+        
         </div>
 
         )}
-
 
     </Layout>
   )
