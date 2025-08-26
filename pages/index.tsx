@@ -192,8 +192,8 @@ export default function Sheets(){
           <div className={styles.btnContainer}>
               <div className={styles.btnGrid}>
                 <p>Signed in through Strava as {session.user.toString()}</p>
-                <button className={styles.btn2} onClick={e => updateData()}> Download Data from Previous 6 Months </button>
-                <button className={styles.btn} id={styles.btn2} onClick={() => signOut()}>Sign Out of Strava</button>
+                <button className={styles.btn} onClick={e => updateData()}> Download Data</button>
+                <button className={styles.btn} onClick={() => signOut()}>Sign Out of Strava</button>
             </div>
           </div>
         
