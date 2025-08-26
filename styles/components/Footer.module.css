@@ -1,8 +1,8 @@
 .main {
-    background: #EF225E;
+    background: var(--main-orange);
     padding: 0.4rem 1rem;
     color: white;
-    /* border-top: 3px solid #dddddd; */
+    border-top: 6px solid #dddddd;
     display: flex;
     justify-content: space-between;
     align-items: center;

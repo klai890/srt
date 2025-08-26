@@ -77,40 +77,30 @@
     display: flex;
     text-align: center;
     justify-content: center;
+    width: 100%;
 }
-
 
 .btnContent {
     margin-top: 2rem;
-    max-width: 35vw;
 }
 
 .btnGrid {
     display: grid;
-    grid-gap: 1rem;
+    grid-gap: 0.8rem;
 }
 
 .btn {
-    padding: 1rem;
+    padding: 0.5rem;
     font-size: 1.2rem;
     border-radius: 14px;
+    border: 3px solid var(--main-orange);
     color: white;
-    background: #754F98;
-    width: 100%;
+    background: var(--main-orange);
 }
 
 .btn:hover {
     cursor: pointer;
-}
-
-.btn2 {
-    padding: 1rem;
-    font-size: 1.2rem;
-    border-radius: 14px;
-    border: 1px solid #eeeeee;
-    color: white;
-    background: #EF215D;
-    width: 300px;
+    background: #da4d10;
 }
 
 .description {
@@ -150,11 +140,6 @@
 .stravaBtn {
     background: #fc4c02;
     border-color: #fc4c02;
-}
-
-.googleBtn {
-    background: #5383EC;
-    border-color: #5383EC;
 }
 
 @media screen and (max-width: 990px){
