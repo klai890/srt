@@ -1,37 +1,16 @@
 /**
  * /lib/strava/api/utils.ts
- * Contains functions to help with fetching & parsing date from Strava.
+ * Contains functions to help with fetching & parsing data from Strava.
  */
 
 import ActivityWeek from '../models/ActivityWeek';
 import SummaryActivity from '../models/SummaryActivity';
 import Activity from "../models/Activity";
-import MileagePoint from '../models/MileagePoint';
+import { roundTwo, prevMon, activityWeekKey } from '../../../utils/utils'
 
-// Six months in miliseconds
-export const SIX_MONTHS = 6*2.628e+9;
-
-// Three months in miliseconds
-export const THREE_MONTHS = 3*2.628e+9;
-
-// One week in miliseconds
-export const ONE_WEEK = 6.048e+8;
-
-
-const PER_PAGE = 200; // # activities per page
+// API parameters
+const PER_PAGE = 200;
 export const MAX_CALLS = 10;
-
-export var headers = [
-    {label: 'Week Of', key: 'week'},
-    {label: 'Monday', key: 'monday'},
-    {label: 'Tuesday', key: 'tuesday'},
-    {label: 'Wednesday', key: 'wednesday'},
-    {label: 'Thursday', key: 'thursday'},
-    {label: 'Friday', key: 'friday'},
-    {label: 'Saturday', key: 'saturday'},
-    {label: 'Sunday', key: 'sunday'},
-    {label: 'Mileage', key: 'mileage'}
-]
 
 /**
  * @params userId: The Strava user's id
@@ -58,8 +37,7 @@ export const getStravaData = async function(userId, accessToken, before: Date, a
     // epoch: https://www.epochconverter.com
     // max per page seems to be 200
     
-    // <------------------------- RETRIEVE ACTIVITY DATA ------------------------------------>
-    var responses : Array<SummaryActivity> = []; // all responses
+    var responses : Array<SummaryActivity> = [];
     var i = 1;
     var response : Array<SummaryActivity>= await fetch(
         `${ATHLETES_ENDPOINT}/activities?page=${i}&per_page=${PER_PAGE}&before=${bf}&after=${af}`,
@@ -125,7 +103,7 @@ export const activityMileage = async function (activityId, accessToken) {
  * @param oldest Oldest date in the table.
  * @param newest Newest date in the table.
  */
-function setupCsvTable (csvTable : Array<ActivityWeek>, oldest: Date, newest: Date) : void { 
+export const setupCsvTable  = async function(csvTable : Array<ActivityWeek>, oldest: Date, newest: Date) { 
     var d : Date = new Date(oldest);
     var wk : ActivityWeek;
     
@@ -188,7 +166,6 @@ function addData(json : Array<SummaryActivity>, csvTable : Array<ActivityWeek>) 
 function prettify (json: Array<Activity>) : Array<SummaryActivity> {
     if (!json) return [];
     
-    // first, get only running activities
     json = json.filter ( activity => activity.type == 'Run');
   
     // second, grab only essential data
@@ -204,143 +181,3 @@ function prettify (json: Array<Activity>) : Array<SummaryActivity> {
     
     return condensedJson;
   }  
-
-/**
- * prevMon(): Retrieves the Monday before a date.
- * @param date: Date 
- * @returns Date: Monday, the Monday prior to date @ 11:59pm
- */
-export function prevMon(date: Date) : Date {    
-
-    // day: 0 to 6, with 0 as Sunday, 6 as Saturday
-    var day : number = date.getDay() == 0 ? 7 : date.getDay()
-    var mon = new Date(date.getTime());
-
-    // TODO: small bug – if it's monday but before 11:59pm, prevMon is actually AFTER date.
-    var diff = day - 1; // Days to the previous monday
-    mon.setDate(date.getDate() - diff);
-
-    // 11:59pm
-    mon.setHours(0);
-    mon.setMinutes(0);
-    mon.setSeconds(0);
-
-    return mon;
-}
-
-/**
- * Rounds num to 2 decimal places.
- * @param num 
- * @returns num rounded to 2 decimal places
- */
-function roundTwo (num : number) : number {
-    return Math.round(num * 100) / 100
-}
-
-/**
- * activityWeekKey(): Converts an integer from 0-6 to a day of week. 
- * @param date
- * @returns string: the corresponding key in ActivityWeek
- */
-export function activityWeekKey(date: Date) : string {
-    const day = date.getDay(); // range: 0-6 inclusive
-    switch (day) {
-        case 0: return 'sunday';
-        case 1: return 'monday';
-        case 2: return 'tuesday';
-        case 3: return 'wednesday';
-        case 4: return 'thursday';
-        case 5: return 'friday';
-        case 6: return 'saturday'
-    }
-}
-/**
- * Returns an Array of mondays between af and bf.
- * @param bf Date to stop at
- * @param af Date to start at
- * @returns An Array of Mondays between af and bf
- */
-export function getMondays (bf: Date, af: Date) : Array<Date> {
-    var d : Date = prevMon(af);
-    const bfValue : number = bf.valueOf();
-    var result : Array<Date>= [];
-
-    while (d.valueOf() <= bfValue) {
-        result.push(new Date(d)); // create a new object. you don't want an array of references to the same object.
-        d.setDate(d.getDate() + 7)
-    }
-
-    return result;
-}
-
-/**
- * 
- * Returns an array of MileagePoint's with points between af and bf, each day's value as the
- * sum of the mileage from the seven days prior to the day in question.
- * 
- * @param bf Date to stop at
- * @param af Date to start at
- * @param data An array of ActivityWeeks
- * @returns An array of MileagePoints between af and bf
- */
-export function getPlotData(af: Date, bf: Date, data : Array<ActivityWeek>) : Array<MileagePoint> {
-    /**
-    Loop thru all dates from the last 3 months, calculate each day's "acute load", defined as 
-    the mileage of the last 7 days.
-    */
-
-    var mileagePoints : Array<MileagePoint> = []
-    
-    // First, get the acute load data for af. Queue with oldest date at front, newest date at the end. 
-    // Running sum variable to calculate sum of mileage from each day. Monday to track index of data needed to
-    // access the current day's mileage.
-
-    var queue : Array<number> = []
-    var runningSum : number = 0
-    var monday : Date = new Date(af);
-
-    for (var d : Date = new Date(af.valueOf() - ONE_WEEK); d < new Date(af); d.setDate(d.getDate() + 1)){
-
-      monday = prevMon(d)
-
-      // Retrieve day's mileage from data
-      var key : string = activityWeekKey(d);
-      console.log(data)
-      console.log("Trying to find ", monday.toLocaleDateString())
-      var dayMileage = data.find(item => item.week == monday.toLocaleDateString())[key];
-      queue.push(dayMileage);
-      runningSum += dayMileage;
-    }
-
-    // Then, loop through all the dates from af to bf. For each Date d,
-    for (var d : Date = new Date(af); d < bf; d.setDate(d.getDate() + 1)) {
-
-        // 1. Pop from queue & subtract element's value from running sum variable.
-        var element : number = queue.shift();
-        runningSum -= element;
-
-        // 2. Retrieve data for d.
-        // Check if we need to update monday – if difference between d and monday is 7 days or more
-        if (d.getTime() - monday.getTime() >= ONE_WEEK) {
-          monday = new Date(monday.valueOf() + ONE_WEEK);
-        }
-
-        // Retrieve day's mileage from data
-        var key : string = activityWeekKey(d);
-        element = data.find(item => item.week == monday.toLocaleDateString())[key];
-
-        // 3. Push element to queue & add element's value to running sum variable.
-        queue.push(element);
-        runningSum += element;
-
-        // 4. Create MileagePoint data, push to array
-        var pt : MileagePoint = {
-          'day': new Date(d),
-          'value': runningSum < 0 ? 0 : roundTwo(runningSum)
-        }
-
-        mileagePoints.push(pt);
-
-    }
-    return mileagePoints;
-}

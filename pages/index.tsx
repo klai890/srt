@@ -3,13 +3,15 @@ import Layout from '../components/Layout';
 import Image from 'next/image';
 import { useState } from 'react';
 import React from 'react'
-import { SIX_MONTHS, THREE_MONTHS, getPlotData,
-        getStravaData, MAX_CALLS, getMondays } from '../lib/strava/api/utils';
+import { getStravaData, MAX_CALLS } from '../lib/strava/api/utils';
+import { getMondays, SIX_MONTHS, THREE_MONTHS } from '../utils/utils';
 import { useSession, signIn, signOut } from "next-auth/react"
 import type ActivityWeek from '../lib/strava/models/ActivityWeek'
 import { compareWeeks } from '../lib/strava/models/ActivityWeek';
 import MileagePoint from '../lib/strava/models/MileagePoint';
 import PlotChart from '../sections/PlotChart';
+import { ONE_MONTH } from '../utils/utils';
+import { getMileagePlotData } from '../utils/weeklyMileagePlot';
 
 export default function Sheets(){
 
@@ -22,7 +24,7 @@ export default function Sheets(){
   
   const [viz, setViz] = useState<number>(0);
   const [weekMileagePlotData, setWeekMileagePlotData] = useState<Array<MileagePoint> |null>(null);
-  // const [monthMileagePlotData, setMonthMileagePlotData] = useState<Array<MonthMileagePoint> |null>(null);
+  const [monthMileagePlotData, setMonthMileagePlotData] = useState<Array<MileagePoint> |null>(null);
   // const [dists, setDists] = useState<Array<MonthMileagePoint> |null>(null);
 
   // Fetch activity from database and/or Strava
@@ -132,8 +134,11 @@ export default function Sheets(){
     var firstDate : Date = new Date(bfDate.valueOf() - THREE_MONTHS);
     var lastDate : Date = new Date(bfDate.valueOf());
 
-    var weekMileagePoints : Array<MileagePoint> = getPlotData(firstDate, lastDate, data);
+    var weekMileagePoints : Array<MileagePoint> = getMileagePlotData(firstDate, lastDate, data);
     setWeekMileagePlotData(weekMileagePoints);
+
+    var monthMileagePoints : Array<MileagePoint> = getMileagePlotData(firstDate, lastDate, data, ONE_MONTH);
+    setMonthMileagePlotData(monthMileagePoints);
   }
 
   const updateData = async () => {
@@ -182,7 +187,10 @@ export default function Sheets(){
             {/* Right-side content area to view visualizations */}
             <div className={styles.plotContainer}>
               {viz == 0 && weekMileagePlotData && (
-                <PlotChart plotData={weekMileagePlotData} />
+                <PlotChart plotData={weekMileagePlotData} time_interval_label={"7-Day"} />
+              )}
+              {viz == 1 && monthMileagePlotData && (
+                <PlotChart plotData={monthMileagePlotData} time_interval_label={"30-Day"} />
               )}
             </div>
           </div>
