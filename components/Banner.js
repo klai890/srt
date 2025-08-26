@@ -14,30 +14,16 @@ export default function Banner() {
         <div className={bannerStyles.banner}>
 
           <div>
-            {/* Logo */}
-
-              <Image
-                src="/logo.svg"
-                alt="Powered by Strava"
-                width={100}
-                height={100}
-              />
               {/* Heading */}
               <h1 id={bannerStyles.siteTitle}> 
-                  <Link href={'/'}>Mileage Log for Strava</Link>
+                  <Link href={'/'}>Strava Running Stats</Link>
               </h1>
 
-              <p>A Strava add-on which enables you to export your mileage log in a readable format from Strava</p>
+              <p>Interesting statistics from your runs</p>
           </div>
 
 
         </div>
-        {/* Nav */}  
-        <ul className={bannerStyles.nav}>
-            <li className={bannerStyles.navItem}> <Link href={'/'}> Mileage Export </Link></li>
-            <li className={bannerStyles.navItem}> <Link href={'/autoupdate'}> Auto-Update Google Sheets</Link></li>
-            <li className={bannerStyles.navItem}> <Link href={'/mileageplot'}> Mileage Plot</Link></li>
-        </ul>
       </main>
     </>
   )
