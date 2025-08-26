@@ -16,10 +16,10 @@ export default function Banner() {
           <div>
               {/* Heading */}
               <h1 id={bannerStyles.siteTitle}> 
-                  <Link href={'/'}>Strava Running Stats</Link>
+                  <Link href={'/'}>Running Stats</Link>
               </h1>
 
-              <p>Interesting statistics from your runs</p>
+              <p>Interesting statistics from your runs on Strava!</p>
           </div>
 
 
