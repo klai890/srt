@@ -67,7 +67,7 @@ async function refreshAccessToken(token) {
         client_secret: process.env.STRAVA_SECRET,
         refresh_token: token.refreshToken,
         grant_type: "refresh_token",
-        redirect_uri: "http://localhost:3000/mileage"
+        redirect_uri: "http://localhost:3002/mileage"
       })
       
 
