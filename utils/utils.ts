@@ -3,6 +3,7 @@
  */
 
 // Time constants in milliseconds
+export const ONE_YEAR = 12*2.628e+9;
 export const SIX_MONTHS = 6*2.628e+9;
 export const THREE_MONTHS = 3*2.628e+9;
 export const ONE_MONTH = 2.628e+9

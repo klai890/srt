@@ -111,3 +111,19 @@ a {
     color-scheme: dark;
   }
 }
+
+/* Cal heatmap styling */
+@import url("cal-heatmap/cal-heatmap.css");
+
+/* Override default Cal heatmap styling */
+.ch-domain-text {
+  font-size: 15px;
+}
+
+.ch-plugin-calendar-label-text {
+  font-size: 40px;
+}
+
+#calHeatmap {
+  padding: 1rem 0;
+}

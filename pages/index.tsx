@@ -12,6 +12,7 @@ import MileagePoint from '../lib/strava/models/MileagePoint';
 import PlotChart from '../sections/PlotChart';
 import { ONE_MONTH } from '../utils/utils';
 import { getMileagePlotData } from '../utils/weeklyMileagePlot';
+import CalHeatmap from '../components/CalHeatmap';
 
 export default function Sheets(){
 
@@ -25,6 +26,7 @@ export default function Sheets(){
   const [viz, setViz] = useState<number>(0);
   const [weekMileagePlotData, setWeekMileagePlotData] = useState<Array<MileagePoint> |null>(null);
   const [monthMileagePlotData, setMonthMileagePlotData] = useState<Array<MileagePoint> |null>(null);
+  const [heatmapData, setHeatmapData] = useState<Array<ActivityWeek>>([]);
   // const [dists, setDists] = useState<Array<MonthMileagePoint> |null>(null);
 
   // Fetch activity from database and/or Strava
@@ -139,6 +141,7 @@ export default function Sheets(){
 
     var monthMileagePoints : Array<MileagePoint> = getMileagePlotData(firstDate, lastDate, data, ONE_MONTH);
     setMonthMileagePlotData(monthMileagePoints);
+    setHeatmapData(data);
   }
 
   const updateData = async () => {
@@ -185,12 +188,15 @@ export default function Sheets(){
             </div>
 
             {/* Right-side content area to view visualizations */}
-            <div className={styles.plotContainer}>
+            <div className={styles.plotContainer} id="plotContainer">
               {viz == 0 && weekMileagePlotData && (
                 <PlotChart plotData={weekMileagePlotData} time_interval_label={"7-Day"} />
               )}
               {viz == 1 && monthMileagePlotData && (
                 <PlotChart plotData={monthMileagePlotData} time_interval_label={"30-Day"} />
+              )}
+              {viz == 3 && (
+                <CalHeatmap data={heatmapData} latest={bfDate} earliest={afDate} />
               )}
             </div>
           </div>
