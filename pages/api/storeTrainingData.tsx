@@ -10,7 +10,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const activity_data : ActivityWeek = req.body.activity_week;
 
     const { data, error } = await supabase
-        .from("training_data")
+        .from("week_data")
         .upsert({
             strava_id: strava_id,
             week_start: (new Date(week_start)).toLocaleDateString(),
@@ -20,10 +20,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             thursday: activity_data['thursday'],
             friday: activity_data['friday'],
             saturday: activity_data['saturday'],
-            sunday: activity_data['sunday']
+            sunday: activity_data['sunday'],
+            mileage: activity_data['mileage']
         }, {onConflict: 'strava_id, week_start'});
 
-    if (error) return res.status(500).json({ error: error.message });
+    if (error) {
+        console.error("Error storing training data: ", error);
+        return res.status(500).json({ error: error.message });
+    }
 
     res.status(200).json({ message: "Data stored successfully", data: data });
 }

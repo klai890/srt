@@ -1,3 +1,9 @@
+/**
+ * pages/api/getTrainingData.tsx
+ * 
+ * API endpoint to get weekly training data for a specific user and week.
+ */
+
 import type { NextApiRequest, NextApiResponse } from "next";
 import { supabase } from '../../lib/supabase'; // Use relative path if no alias
 import ActivityWeek from "../../lib/strava/models/ActivityWeek";
@@ -17,12 +23,11 @@ export default async function getTrainingData(req : NextApiRequest, res: NextApi
     }
 
     const { data , error } = await supabase
-        .from("training_data")
+        .from("week_data")
         .select("week_start, monday, tuesday, wednesday, thursday, friday, saturday, sunday, mileage")
         .eq('strava_id', strava_id)
         .eq('week_start', week_start.toISOString().split("T")[0])
         .single()
-
 
     if (error) return res.status(500).json({error: error.message});
 
@@ -42,5 +47,5 @@ export default async function getTrainingData(req : NextApiRequest, res: NextApi
         mileage: data.mileage,
     };
 
-    res.status(200).json(activityWeek);
+    return res.status(200).json(activityWeek);
 }
