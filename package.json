@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev -p 3002",
     "build": "next build",
+    "format": "prettier . --write",
     "start": "next start",
     "lint": "next lint",
     "ngrok": "ngrok http 3000",
@@ -31,6 +32,7 @@
     "next": "^13.1.1",
     "next-auth": "^4.19.0",
     "ngrok": "^4.3.3",
+    "prettier": "^3.6.2",
     "react": "^18.2.0",
     "react-chartjs-2": "^5.3.0",
     "react-csv": "^2.2.2",
