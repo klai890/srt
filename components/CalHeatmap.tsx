@@ -31,8 +31,8 @@ export default function Cal({data, latest, earliest} : {data: Array<ActivityWeek
                 },
                 subDomain: {
                     type: 'day',
-                    width: 21,
-                    height: 25,
+                    width: 17,
+                    height: 17,
                 },
                 date: {
                     start: earliest,

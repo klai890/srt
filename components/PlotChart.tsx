@@ -33,12 +33,29 @@ export default function PlotChart ({ plotData, time_interval_label }){
         title: {
           text: `Previous ${time_interval_label} Mileage`,
           display: true,
+          font: {
+            size: 14,
+          }
+        },
+        ticks: {
+          font: {
+            size: 12
+          }
         }
       },
       x: {
         title: {
           text: 'Date (MM/DD)',
-          display: true
+          display: true,
+          font: {
+            size: 14
+          }
+
+        },
+        ticks: {
+          font: {
+            size: 12
+          }
         }
       }
     }

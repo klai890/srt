@@ -11,7 +11,7 @@ const prepareHistogramData = (activities: Array<SummaryActivity>) => {
     for (var i = 0; i < Math.floor(max); i++) {
         labels.push(`${i} to ${i+1}`);
     }
-    var counts = new Array(max+1).fill(0);
+    var counts = new Array(Math.floor(max)+1).fill(0);
     histogramData.forEach(dist => {
         counts[Math.floor(dist)]++;
     })
@@ -31,10 +31,11 @@ export default function PlotHistogram ({ activities } : { activities: Array<Summ
         labels: labels,
         datasets: [
             {
-                label: 'Histogram of Run Distances',
+                label: 'Number of Runs',
                 data: counts,
                 fill: false,
                 borderColor: 'rgba(75,192,192,1)',
+                backgroundColor: 'rgba(255, 135, 84, 1)', // Sets a single color for all bars
                 tension: 0.1,
             }
         ]
@@ -46,12 +47,28 @@ export default function PlotHistogram ({ activities } : { activities: Array<Summ
                 title: { 
                     text: 'Number of Runs',
                     display: true,
+                    font: {
+                        size: 15
+                    }
+                },
+                ticks: {
+                    font: {
+                        size: 14
+                    }
                 }
             },
             x: {
                 title: {
                     text: 'Distances (miles)',
-                    display: true
+                    display: true,
+                    font: {
+                        size: 15
+                    }
+                },
+                ticks: {
+                    font: {
+                        size: 14
+                    }
                 }
             }
         }
