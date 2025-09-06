@@ -1,43 +1,139 @@
 import ActivityWeek from "../models/ActivityWeek";
 import {setupCsvTable} from './utils'
-import {expect, jest, test} from '@jest/globals';
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { getStravaData } from "./utils";
 
 
-const mockData: ActivityWeek[] = [
-    {
-      week: '3/17/2025',
-      monday: 3,
-      tuesday: 4,
-      wednesday: 0,
-      thursday: 2,
-      friday: 1,
-      saturday: 0,
-      sunday: 5,
-      mileage: 15
-    },
-    {
-      week: '3/24/2025',
-      monday: 2,
-      tuesday: 3,
-      wednesday: 2,
-      thursday: 1,
-      friday: 4,
-      saturday: 3,
-      sunday: 2,
-      mileage: 17
-    }
-]
+const mockFetch = vi.fn();
 
-const bf : Date = new Date('3/23/25');
-const af : Date = new Date('3/31/25');
+beforeEach(() => {
+    vi.stubGlobal('fetch', mockFetch);
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+});
 
-/********************** TESTS *************************/
-test("getStravaData() works as expected", () => {
-    // todo
-})
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
 
-test("activityMileage() works as expected", () => {
-    // todo
+
+describe("getStravaData()", () => {
+    it("should fetches activities correctly", async () => {
+        const mock_data = [
+            { distance: 10000, name: "Morning Run", start_date: '2018-05-02T12:15:09Z', type: 'Run'},
+            { distance: 30000, name: "Morning Ride", start_date: '2018-05-03T15:15:09Z', type: 'Ride'},
+            { distance: 6000, name: "Morning Run", start_date: '2018-05-03T12:15:09Z', type: 'Run'},
+            { distance: 30000, name: "Morning Ride", start_date: '2018-05-03T15:15:09Z', type: 'Ride'},
+        ]
+    
+        mockFetch.mockResolvedValueOnce({
+            json: () => Promise.resolve(mock_data),
+        })
+
+        const before = new Date("2018-05-04");
+        const after = new Date("2018-05-02");
+        const strava_id = 12345;
+        const access_token = "abcdefg";
+
+        const result = await getStravaData(strava_id, access_token, before, after);
+
+        expect(result.raw_data).toHaveLength(2);
+    })
+
+    it("should handle paginated responses correctly and return all data", async () => {
+        const mock_run = {
+            distance: 10000,
+            name: '10km run',
+            start_date: '2018-05-02T12:15:09Z',
+            type: 'Run',
+        }
+        const mock_ride = {
+            distance: 30000,
+            name: '30km ride',
+            start_date: '2018-05-13T12:15:09Z',
+            type: 'Ride',
+        }
+        const mock_run2 = {
+            distance: 5000,
+            name: '5km run',
+            start_date: '2018-05-12T12:15:09Z',
+            type: 'Run',
+        }
+        const page_one = new Array(200);
+        page_one.fill(mock_run, 0, 50);
+        page_one.fill(mock_ride, 50, 100);
+        page_one.fill(mock_run, 100, 150);
+        page_one.fill(mock_ride, 150, 200);
+
+        const page_two = new Array(200);
+        page_two.fill(mock_ride, 0, 40);
+        page_two.fill(mock_run2, 40, 200);
+
+        const page_three = new Array(100);
+        page_three.fill(mock_run, 0, 100);
+
+
+        mockFetch
+        .mockResolvedValueOnce({
+            json: () => Promise.resolve(page_one),
+        })
+        .mockResolvedValueOnce({
+            json: () => Promise.resolve(page_two),
+        })
+        .mockResolvedValueOnce({
+            json: () => Promise.resolve(page_three),
+        });
+
+        const before = new Date("2018-05-14");
+        const after = new Date("2018-05-02");
+        const strava_id = 12345;
+        const access_token = "abcdefg";
+
+        const result = await getStravaData(strava_id, access_token, before, after);
+        expect(result.raw_data).toHaveLength(360);
+        expect(result.week_data).toHaveLength(2);
+    })
+
+    it("should return raw_data in chronological order", async () => {
+        const page_one = [
+            {
+                distance: 5000,
+                name: '5km run 8/30', 
+                start_date: '2025-08-30T07:40:02Z',
+                type: 'Run',
+            },
+            {
+                distance: 5000,
+                name: '5km run 8/15', 
+                start_date: '2025-08-15T07:40:02Z',
+                type: 'Run',
+            },
+            {
+                distance: 5000,
+                name: '5km run 9/4', 
+                start_date: '2025-09-04T07:40:02Z',
+                type: 'Run',
+            }
+        ]
+
+        mockFetch
+        .mockResolvedValueOnce({
+            json: () => Promise.resolve(page_one),
+        })
+
+        const before = new Date("2025-09-05");
+        const after = null;
+        const strava_id = 12345;
+        const access_token = "abcdefg";
+
+        const result = await getStravaData(strava_id, access_token, before, after);
+        var dates : Array<Date> = result.raw_data.map(data => new Date(data.start_date));
+        expect(dates.map(d => d.getTime())).toEqual([
+            new Date('2025-08-15T07:40:02Z').getTime(),
+            new Date('2025-08-30T07:40:02Z').getTime(),
+            new Date('2025-09-04T07:40:02Z').getTime()
+        ]);
+    })
 })
 
 test("setupCsvTable() works as expected", () => {
@@ -103,13 +199,4 @@ test("setupCsvTable() works as expected", () => {
     var csvTable : Array<ActivityWeek> = [];
     setupCsvTable(csvTable, oldest, newest);
     expect(csvTable).toEqual(table);
-})
-
-
-test("addData() works as expected", () => {
-    //  todo
-})
-
-test("prettify() works as expected", () => {
-    // todo
 })
