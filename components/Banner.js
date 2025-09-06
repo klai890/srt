@@ -13,12 +13,12 @@ export default function Banner() {
       <main className={inter.className}>
         <div className={bannerStyles.banner}>
           <div>
-            {/* Heading */}
-            <h1 id={bannerStyles.siteTitle}>
-              <Link href={"/"}>Strava Running Stats</Link>
-            </h1>
+              {/* Heading */}
+              <h1 id={bannerStyles.siteTitle}> 
+                  <Link href={'/'}>Running Stats</Link>
+              </h1>
 
-            <p>Interesting statistics from your runs</p>
+              <p>Interesting statistics from your runs on Strava!</p>
           </div>
         </div>
       </main>

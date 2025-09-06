@@ -10,15 +10,12 @@ export default function Footer() {
     <>
       <main className={inter.className}>
         <div className={footerStyles.main}>
-          {/* Mandatory  */}
-          <Image
-            src="/api_logo_pwrdBy_strava_horiz_white.svg"
-            alt="Powered by Strava"
-            width={200}
-            height={30}
-          />
-
-          {/* MY personal stamp! */}
+              <Image
+                src="/api_logo_pwrdBy_strava_horiz_white.svg"
+                alt="Powered by Strava"
+                width={200}
+                height={30}
+              />
           <div> © Karena Lai </div>
         </div>
       </main>
