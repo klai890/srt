@@ -1,0 +1,31 @@
+# dependencies
+node_modules
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# build outputs
+dist
+build
+.next
+out
+coverage
+generated
+
+# config
+*.log
+*.lock
+*.cache
+*.tmp
+
+# environment files
+.env
+.env.*.local
+
+# generated code & assets
+public
+supabase
+
+# misc
+.DS_Store
+.vscode
