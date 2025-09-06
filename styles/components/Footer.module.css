@@ -1,18 +1,18 @@
 .main {
-    background: #EF225E;
-    padding: 0.4rem 1rem;
-    color: white;
-    /* border-top: 3px solid #dddddd; */
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    text-align: center;
-    width: 100%;
-    bottom: 0;
+  background: #ef225e;
+  padding: 0.4rem 1rem;
+  color: white;
+  /* border-top: 3px solid #dddddd; */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+  bottom: 0;
 }
 
-@media screen and (max-width:800px) {
-    .main {
-        padding: 0.5rem;
-    }
+@media screen and (max-width: 800px) {
+  .main {
+    padding: 0.5rem;
+  }
 }
