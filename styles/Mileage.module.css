@@ -1,24 +1,24 @@
 .pageHeader {
-    text-align: center;
-    /* border: 1px solid black; */
-    padding: 1rem 0 1rem 0;
+  text-align: center;
+  /* border: 1px solid black; */
+  padding: 1rem 0 1rem 0;
 }
 
 .h2 {
-    margin: 0 0 0.5rem 0;
-    line-height: 2.4rem;
+  margin: 0 0 0.5rem 0;
+  line-height: 2.4rem;
 }
 
 .link {
-    color: blue;
-    text-decoration: underline;
+  color: blue;
+  text-decoration: underline;
 }
 
 .gallery {
-    margin: 1rem;
-    text-align: center;
-    justify-content: center;
-    align-items: center;
+  margin: 1rem;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
 }
 
 .mainContainer {
@@ -32,147 +32,146 @@
   min-height: 800px;
 }
 
-.plotContainer{
-    display: flex;
-    text-align: center;
-    justify-content: center;
-    flex-direction:column;
-    margin: 3rem;
+.plotContainer {
+  display: flex;
+  text-align: center;
+  justify-content: center;
+  flex-direction: column;
+  margin: 3rem;
 }
 
 .menuContainer {
-    height: 100%;
-    border: 1px solid #eeeeee;
-    border-radius: 8px;
-    background: rgba(252, 77, 2, 0.913);
-    background: #eeeeee;
-    padding: 1rem 0.2rem 0.2rem 0.2rem;
+  height: 100%;
+  border: 1px solid #eeeeee;
+  border-radius: 8px;
+  background: rgba(252, 77, 2, 0.913);
+  background: #eeeeee;
+  padding: 1rem 0.2rem 0.2rem 0.2rem;
 }
 
 .menuContainer .menuHeader {
-    text-align: center;
-    font-size: 1.5rem;
-    font-weight: bold;
-    margin: 1rem 0 1rem 0;
-    color: black;
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin: 1rem 0 1rem 0;
+  color: black;
 }
 
 .menuContainer .menuItem {
-    text-align: center;
-    padding: 4px;
-    border: 2px solid #fc4c02;
-    border-radius: 8px;
-    margin: 8px;
-    color: #fc4c02;
+  text-align: center;
+  padding: 4px;
+  border: 2px solid #fc4c02;
+  border-radius: 8px;
+  margin: 8px;
+  color: #fc4c02;
 }
 
-
 .menuContainer .menuItem:hover {
-    cursor: pointer;
-    background-color: #ddd;
+  cursor: pointer;
+  background-color: #ddd;
 }
 
 /* Mileage Button Styles */
 .btnContainer {
-    display: flex;
-    text-align: center;
-    justify-content: center;
-    width: 100%;
+  display: flex;
+  text-align: center;
+  justify-content: center;
+  width: 100%;
 }
 
 .btnContent {
-    margin-top: 2rem;
+  margin-top: 2rem;
 }
 
 .btnGrid {
-    display: grid;
-    grid-gap: 0.8rem;
+  display: grid;
+  grid-gap: 0.8rem;
 }
 
 .btn {
-    padding: 0.5rem;
-    font-size: 1.2rem;
-    border-radius: 14px;
-    border: 3px solid var(--main-orange);
-    color: white;
-    background: var(--main-orange);
+  padding: 0.5rem;
+  font-size: 1.2rem;
+  border-radius: 14px;
+  border: 3px solid var(--main-orange);
+  color: white;
+  background: var(--main-orange);
 }
 
 .btn:hover {
-    cursor: pointer;
-    background: #da4d10;
+  cursor: pointer;
+  background: #da4d10;
 }
 
 .description {
-    font-size: 1.2rem;
-    margin-bottom: 1.5rem;
+  font-size: 1.2rem;
+  margin-bottom: 1.5rem;
 }
 
 .csvWidescreen {
-    border: 1px solid black;
-    display: inline;
+  border: 1px solid black;
+  display: inline;
 }
 
 .csvMobile {
-    border: 1px solid black;
-    display: none;
+  border: 1px solid black;
+  display: none;
 }
 
 .sheetsWidescreen {
-    border: 1px solid black;
-    display: inline;
+  border: 1px solid black;
+  display: inline;
 }
 
 .sheetsMobile {
-    border: 1px solid black;
-    display: none;
+  border: 1px solid black;
+  display: none;
 }
 
 .authBtn {
-    border-radius: 3px;
-    margin: 0.25rem;
+  border-radius: 3px;
+  margin: 0.25rem;
 }
 
 .authBtn:hover {
-    cursor: pointer;
+  cursor: pointer;
 }
 
 .stravaBtn {
-    background: #fc4c02;
-    border-color: #fc4c02;
+  background: #fc4c02;
+  border-color: #fc4c02;
 }
 
-@media screen and (max-width: 990px){
-    .sheetsWidescreen {
-        width: 606px;
-        height: 169px;
-    }
+@media screen and (max-width: 990px) {
+  .sheetsWidescreen {
+    width: 606px;
+    height: 169px;
+  }
 }
 
-@media screen and (max-width: 850px){
-    .csvWidescreen {
-        width: 565px;
-        height: 304px;
-    }    
-    .btnContent {
-        max-width: 90%;
-    }
+@media screen and (max-width: 850px) {
+  .csvWidescreen {
+    width: 565px;
+    height: 304px;
+  }
+  .btnContent {
+    max-width: 90%;
+  }
 }
 
-@media screen and (max-width: 650px){
-    .gallery{
-        margin: 0;
-    }
-    .csvWidescreen{
-        display: none
-    }
-    .csvMobile{
-        display: inline;
-    }    
-    .sheetsWidescreen{
-        display: none
-    }
-    .sheetsMobile{
-        display: inline;
-    }
+@media screen and (max-width: 650px) {
+  .gallery {
+    margin: 0;
+  }
+  .csvWidescreen {
+    display: none;
+  }
+  .csvMobile {
+    display: inline;
+  }
+  .sheetsWidescreen {
+    display: none;
+  }
+  .sheetsMobile {
+    display: inline;
+  }
 }
