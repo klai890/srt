@@ -9,5 +9,6 @@ export default defineConfig({
     globals: true, // so you can use `describe`, `it`, `expect` without imports
     environment: "node",
     exclude: ["generated/*", "node_modules/*"],
+    passWithNoTests: true,
   },
 });
