@@ -8,6 +8,6 @@ export default defineConfig({
   test: {
     globals: true, // so you can use `describe`, `it`, `expect` without imports
     environment: "node",
-    exclude: ['generated/*', 'node_modules/*']
+    exclude: ["generated/*", "node_modules/*"],
   },
 });

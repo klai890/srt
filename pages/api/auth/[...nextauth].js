@@ -1,12 +1,12 @@
-/* 
+/*
  * All requests to /api/auth/* (signIn, callback, signOut, etc.) will automatically be handled by NextAuth.js.
- * 
- * Dynamic route handler for NextAuth.js which also contains all global NextAuth.js 
+ *
+ * Dynamic route handler for NextAuth.js which also contains all global NextAuth.js
  * configurations
  */
 
-import NextAuth from "next-auth"
-import StravaProvider from "next-auth/providers/strava"
+import NextAuth from "next-auth";
+import StravaProvider from "next-auth/providers/strava";
 
 export const authOptions = {
   providers: [
@@ -14,24 +14,24 @@ export const authOptions = {
       clientId: process.env.STRAVA_ID,
       clientSecret: process.env.STRAVA_SECRET,
       authorization: {
-        url: 'https://www.strava.com/oauth/authorize?',
-        params : {scope: 'activity:read,activity:read_all,activity:write'}
-      }
+        url: "https://www.strava.com/oauth/authorize?",
+        params: { scope: "activity:read,activity:read_all,activity:write" },
+      },
     }),
   ],
   session: {
-    strategy: "jwt"
+    strategy: "jwt",
   },
 
   callbacks: {
     async jwt({ token, account, profile }) {
       // Persist the OAuth access_token and or the user id to the token right after signin
-      
+
       // Initial Sign in
       if (account) {
-        token.accessToken = account.access_token
-        token.refreshToken = account.refresh_token
-        token.id = profile.id
+        token.accessToken = account.access_token;
+        token.refreshToken = account.refresh_token;
+        token.id = profile.id;
         return token;
       }
 
@@ -46,17 +46,16 @@ export const authOptions = {
     },
 
     async session({ session, token }) {
-      session.name = token.name
-      session.user = token.name
-      session.accessToken = token.accessToken
-      session.refreshToken = token.refreshToken
-      session.error = token.error
-      session.userid = token.id + ""
-      return session
+      session.name = token.name;
+      session.user = token.name;
+      session.accessToken = token.accessToken;
+      session.refreshToken = token.refreshToken;
+      session.error = token.error;
+      session.userid = token.id + "";
+      return session;
     },
-
   },
-}
+};
 
 async function refreshAccessToken(token) {
   try {
@@ -67,9 +66,8 @@ async function refreshAccessToken(token) {
         client_secret: process.env.STRAVA_SECRET,
         refresh_token: token.refreshToken,
         grant_type: "refresh_token",
-        redirect_uri: "http://localhost:3002/mileage"
-      })
-      
+        redirect_uri: "http://localhost:3002/mileage",
+      });
 
     const response = await fetch(url, {
       headers: {
@@ -77,12 +75,12 @@ async function refreshAccessToken(token) {
         "Content-Type": "application/json",
       },
       method: "POST",
-    })
+    });
 
-    const refreshedTokens = await response.json()
+    const refreshedTokens = await response.json();
 
     if (!response.ok) {
-      throw refreshedTokens
+      throw refreshedTokens;
     }
 
     return {
@@ -90,17 +88,15 @@ async function refreshAccessToken(token) {
       accessToken: refreshedTokens.access_token,
       accessTokenExpires: Date.now() + refreshedTokens.expires_at * 1000,
       refreshToken: refreshedTokens.refresh_token ?? token.refreshToken, // Fall back to old refresh token
-    }
+    };
   } catch (error) {
-    console.log(error)
+    console.log(error);
 
     return {
       ...token,
       error: "RefreshAccessTokenError",
-    }
+    };
   }
 }
 
-
-
-export default NextAuth(authOptions)
+export default NextAuth(authOptions);
