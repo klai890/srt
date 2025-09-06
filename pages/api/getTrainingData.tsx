@@ -8,26 +8,23 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { supabase } from '../../lib/supabase'; // Use relative path if no alias
 import ActivityWeek from "../../lib/strava/models/ActivityWeek";
 
-export default async function getTrainingData(req : NextApiRequest, res: NextApiResponse <ActivityWeek | { error: string }>) {
+export default async function getTrainingData(req : NextApiRequest, res: NextApiResponse <Array<ActivityWeek> | { error: string }>) {
 
     if (req.method !== "POST") {
         return res.status(405).json({ error: "Method Not Allowed" });
     }
 
-    // strava_id, week_start must be int and Date respectively.
+    // strava_id must be int
     const strava_id : number = parseInt(req.body.strava_id, 10);
-    const week_start : Date = new Date(req.body.week_start);
 
-    if (!strava_id || !week_start) {
-        return res.status(400).json({ error: "Missing strava_id or week_start" });
+    if (!strava_id) {
+        return res.status(400).json({ error: "Missing strava_id" });
     }
 
     const { data , error } = await supabase
         .from("week_data")
         .select("week_start, monday, tuesday, wednesday, thursday, friday, saturday, sunday, mileage")
         .eq('strava_id', strava_id)
-        .eq('week_start', week_start.toISOString().split("T")[0])
-        .single()
 
     if (error) return res.status(500).json({error: error.message});
 
@@ -35,17 +32,19 @@ export default async function getTrainingData(req : NextApiRequest, res: NextApi
         return res.status(404).json({ error: "No training data found" });
     }    
 
-    const activityWeek: ActivityWeek = {
-        week: (new Date(data.week_start + 'T00:00:00')).toLocaleDateString(), // Rename `week_start` to `week`
-        monday: data.monday,
-        tuesday: data.tuesday,
-        wednesday: data.wednesday,
-        thursday: data.thursday,
-        friday: data.friday,
-        saturday: data.saturday,
-        sunday: data.sunday,
-        mileage: data.mileage,
-    };
+    const activityWeeks : Array<ActivityWeek> = data.map(d => {
+        return {
+            week: (new Date(d.week_start + 'T00:00:00')).toLocaleDateString(), // Rename `week_start` to `week`
+            monday: d.monday,
+            tuesday: d.tuesday,
+            wednesday: d.wednesday,
+            thursday: d.thursday,
+            friday: d.friday,
+            saturday: d.saturday,
+            sunday: d.sunday,
+            mileage: d.mileage,
+        }
+    })
 
-    return res.status(200).json(activityWeek);
+    return res.status(200).json(activityWeeks);
 }

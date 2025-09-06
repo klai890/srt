@@ -4,13 +4,13 @@
  */
 
 import ActivityWeek from '../models/ActivityWeek';
-import SummaryActivity from '../models/SummaryActivity';
+import SummaryActivity, { compareActivities } from '../models/SummaryActivity';
 import Activity from "../models/Activity";
+import {StravaData} from '../models/StravaData';
 import { roundTwo, prevMon, activityWeekKey } from '../../../utils/utils'
 
 // API parameters
 const PER_PAGE = 200;
-export const MAX_CALLS = 10;
 
 /**
  * @params userId: The Strava user's id
@@ -23,54 +23,68 @@ export const MAX_CALLS = 10;
  * 
  * Retrieves data between Date after and Date before.
  */
-export const getStravaData = async function(userId, accessToken, before: Date, after: Date) {
-
-    // Setup Table
-    var csvTable : Array<ActivityWeek> = [];
-    setupCsvTable(csvTable, prevMon(after), prevMon(before))
-
+export const getStravaData = async function(userId, accessToken, before: Date, after: Date | null) : Promise<StravaData> {
+    console.log("getStravaData() called with ", userId, before, after)
     // https://groups.google.com/g/strava-api/c/KiQo6sVlWG4: before & after params must be in seconds
     const bf : number = Math.trunc(before.valueOf() / 1000)
-    const af : number = Math.trunc(after.valueOf() / 1000)
+    var af : number;
+    if (after != null) { af = Math.trunc(after.valueOf() / 1000) }
     const ATHLETES_ENDPOINT = `https://www.strava.com/api/v3/athletes/${userId}`;
     
     // epoch: https://www.epochconverter.com
-    // max per page seems to be 200
     
     var responses : Array<SummaryActivity> = [];
     var i = 1;
-    var response : Array<SummaryActivity>= await fetch(
-        `${ATHLETES_ENDPOINT}/activities?page=${i}&per_page=${PER_PAGE}&before=${bf}&after=${af}`,
-        {
-            method: 'GET', 
-            headers: {
-                'Authorization': `Bearer ${accessToken}`
-            }
-        }
-    ).then(d => d.json()).then(d => {if (d) return prettify(d)})
-    if (!response) return;
+    var activitiesFetched;
 
-    while ((response.length != 0 || i == 1) && i < MAX_CALLS) {        
-        responses = responses.concat(response)
-        i++;
+    do {
+        var queryString = `${ATHLETES_ENDPOINT}/activities?page=${i}&per_page=${PER_PAGE}&before=${bf}&after=${af}`;
+        if (after == null) queryString = `${ATHLETES_ENDPOINT}/activities?page=${i}&per_page=${PER_PAGE}`;
 
-        response = await fetch(
-            `${ATHLETES_ENDPOINT}/activities?page=${i}&per_page=${PER_PAGE}&before=${bf}&after=${af}`,
+        var response : Array<SummaryActivity> = await fetch(
+            queryString,
             {
                 method: 'GET', 
                 headers: {
                     'Authorization': `Bearer ${accessToken}`
                 }
             }
-        ).then(d => d.json()).then(d => {if (d) return prettify(d)})
+        ).then(d => d.json()).then(d => {
+            if (d) {
+                activitiesFetched = d.length;
+                return prettify(d)
+            }
+            activitiesFetched = 0;
+            return [];
+        })
+        if (response && response.length != 0) responses = responses.concat(response);
+        i++;
+
+    } while (activitiesFetched == PER_PAGE);
+
+    // User has no activities
+    if (responses.length == 0) {
+        return {
+            week_data: null,
+            raw_data: null
+        }
     }
 
-    if (i == MAX_CALLS) {
-        alert("Max calls reached. Data may not be accurate. Sorry!");
-    }
+    // Sort activities in order of ascending chronological order
+    responses.sort(compareActivities)
+    console.log("Responses is of length", responses.length)
+    console.log("Responses is", responses)
+    after = after == null ? new Date(responses[0].start_date) : after;
 
-    csvTable = addData(responses, csvTable);
-    return csvTable;
+    // Setup Table
+    var csvTable : Array<ActivityWeek> = [];
+    setupCsvTable(csvTable, prevMon(after), prevMon(before))
+    csvTable = addData(Array.from(responses), csvTable); // for week_data table
+
+    return {
+        week_data: csvTable as Array<ActivityWeek> | null,
+        raw_data: responses as Array<SummaryActivity> | null
+    };
 }
 
 /**
@@ -125,6 +139,8 @@ export const setupCsvTable  = async function(csvTable : Array<ActivityWeek>, old
         csvTable.push(wk); // should update obj in orig func, if like Java.
         d.setDate(d.getDate() + 7)
     }
+
+    console.log("Dates in csvTable:", csvTable.map(d => d.week))
 }
 
 /**
@@ -134,7 +150,6 @@ export const setupCsvTable  = async function(csvTable : Array<ActivityWeek>, old
  * @returns Array<ActivityWeek> The updated CSV Table
  */
 function addData(json : Array<SummaryActivity>, csvTable : Array<ActivityWeek>) : Array<ActivityWeek>{
-
     // pop from existing data, add to csvTable
     while (json.length != 0) {
         var mon : Date = json[0].prev_mon;
@@ -151,7 +166,7 @@ function addData(json : Array<SummaryActivity>, csvTable : Array<ActivityWeek>) 
         }
 
         else {
-            alert("ERROR: Week was not in CSV table.")
+            console.error("ERROR: Week was not in CSV table.")
         }
     }
 
@@ -165,6 +180,7 @@ function addData(json : Array<SummaryActivity>, csvTable : Array<ActivityWeek>) 
  */
 function prettify (json: Array<Activity>) : Array<SummaryActivity> {
     if (!json) return [];
+    console.log("Json is here! it is", json)
     
     json = json.filter ( activity => activity.type == 'Run');
   
