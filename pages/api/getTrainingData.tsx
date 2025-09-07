@@ -12,6 +12,7 @@ export default async function getTrainingData(
   req: NextApiRequest,
   res: NextApiResponse<Array<ActivityWeek> | { error: string }>,
 ) {
+  console.log("req.method", req.method);
   if (req.method === "OPTIONS") {
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
