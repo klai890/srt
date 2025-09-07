@@ -1,7 +1,19 @@
+/**
+ * pages/api/storeActivities.tsx
+ *
+ * API endpoint to store run activities for a specific user
+ */
+
 import type { NextApiRequest, NextApiResponse } from "next";
 import { supabase } from "../../lib/supabase"; // Use relative path if no alias
-import ActivityWeek from "../../lib/strava/models/ActivityWeek";
+import SummaryActivity from "../../lib/strava/models/SummaryActivity";
 
+/**
+ *
+ * @param req Contains strava_id, and an array of objects each with distance (miles), day (Date)
+ * @param res
+ * @returns Stores the run activities in Supabase.
+ */
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse,
@@ -10,26 +22,18 @@ export default async function handler(
     return res.status(405).json({ error: "Method Not Allowed" });
 
   const strava_id: number = req.body.strava_id;
-  const week_data: Array<ActivityWeek> = req.body.activity_weeks;
-
-  var formatted_week_data = week_data.map((wk) => {
+  const activities: Array<SummaryActivity> = req.body.activities;
+  var formatted_activities = activities.map((a) => {
     return {
       strava_id: strava_id,
-      week_start: new Date(wk.week).toLocaleDateString(),
-      monday: wk["monday"],
-      tuesday: wk["tuesday"],
-      wednesday: wk["wednesday"],
-      thursday: wk["thursday"],
-      friday: wk["friday"],
-      saturday: wk["saturday"],
-      sunday: wk["sunday"],
-      mileage: wk["mileage"],
+      distance: a.distance,
+      day: new Date(a.start_date).toLocaleDateString(),
     };
   });
 
   const { data, error } = await supabase
-    .from("week_data")
-    .upsert(formatted_week_data, { onConflict: "strava_id, week_start" });
+    .from("activities")
+    .insert(formatted_activities);
 
   if (error) {
     console.error("Error storing training data: ", error);

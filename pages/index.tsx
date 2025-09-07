@@ -3,148 +3,175 @@ import Layout from "../components/Layout";
 import Image from "next/image";
 import { useState } from "react";
 import React from "react";
-import {
-  SIX_MONTHS,
-  THREE_MONTHS,
-  getPlotData,
-  getStravaData,
-  MAX_CALLS,
-  getMondays,
-} from "../lib/strava/api/utils";
+import { getStravaData } from "../lib/strava/api/utils";
+import { StravaData } from "../lib/strava/models/StravaData";
+import { THREE_MONTHS, ONE_MONTH } from "../utils/utils";
 import { useSession, signIn, signOut } from "next-auth/react";
 import type ActivityWeek from "../lib/strava/models/ActivityWeek";
 import { compareWeeks } from "../lib/strava/models/ActivityWeek";
 import MileagePoint from "../lib/strava/models/MileagePoint";
-import PlotChart from "../sections/PlotChart";
+import PlotChart from "../components/PlotChart";
+import { getMileagePlotData } from "../utils/weeklyMileagePlot";
+import CalHeatmap from "../components/CalHeatmap";
+import SummaryActivity, {
+  compareActivities,
+} from "../lib/strava/models/SummaryActivity";
+import PlotHistogram from "../components/PlotHistogram";
 
 export default function Sheets() {
   const { data: session } = useSession();
-  const [csvData, setData] = useState<Array<ActivityWeek> | null>(null);
-  const [apiCalls, setApiCalls] = useState<number>(0);
-
-  const [bfDate, setBfDate] = useState<Date | null>(new Date()); // today
-  const [afDate, setAfDate] = useState<Date | null>(
-    new Date(bfDate.valueOf() - SIX_MONTHS),
-  ); // 6 months ago
+  const [weekData, setWeekData] = useState<Array<ActivityWeek>>([]);
 
   const [viz, setViz] = useState<number>(0);
   const [weekMileagePlotData, setWeekMileagePlotData] =
     useState<Array<MileagePoint> | null>(null);
-  // const [monthMileagePlotData, setMonthMileagePlotData] = useState<Array<MonthMileagePoint> |null>(null);
-  // const [dists, setDists] = useState<Array<MonthMileagePoint> |null>(null);
+  const [monthMileagePlotData, setMonthMileagePlotData] =
+    useState<Array<MileagePoint> | null>(null);
+  const [heatmapData, setHeatmapData] = useState<Array<ActivityWeek>>([]);
+  const [activities, setActivities] = useState<Array<SummaryActivity>>([]);
+  const [earliest, setEarliest] = useState<Date | null>(null);
 
   // Fetch activity from database and/or Strava
   const fetchData = async () => {
-    const mondays: Array<Date> = getMondays(bfDate, afDate);
+    var all_weeks: Array<ActivityWeek> = [];
+    var all_activities: Array<SummaryActivity> = [];
 
-    var excludedWeeks: Array<Date> = [];
-    var data: Array<ActivityWeek> = csvData ? csvData : [];
+    // Retrieve all week data from Supabase, for this user
+    try {
+      var response = await fetch("/api/getTrainingData", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          strava_id: session.userid,
+        }),
+      });
+      var res = await response.json();
+      if (res["error"]) throw Error(res.error);
+      const res_data: Array<ActivityWeek> = res;
+      res_data.sort(compareWeeks);
+      all_weeks = res_data;
+    } catch (error) {
+      console.error(`Error fetching activities from Supabase`, error);
+    }
 
-    for (const monday of mondays) {
-      // Check if we already have data for monday's week.
-      const inArray: boolean = data.find(
-        (item) => item.week === monday.toLocaleDateString(),
-      )
-        ? true
-        : false;
+    // Retrieve all activities from Supabase
+    try {
+      const response = await fetch("/api/getActivities", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          strava_id: session.userid,
+        }),
+      });
 
-      // Try retrieving from database, before fetching from Strava
-      if (!inArray) {
-        try {
-          const response = await fetch("/api/getTrainingData", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              strava_id: session.userid,
-              week_start: monday,
-            }),
-          });
+      const res = await response.json();
 
-          const res = await response.json();
+      if (res["error"]) throw Error(res.error);
 
-          if (res["error"]) throw Error(res.error);
+      const res_data: Array<SummaryActivity> = res;
+      res_data.sort(compareActivities);
+      all_activities = res_data;
+    } catch (error) {
+      // Not in database, must fetch from Strava & store in database.
+      console.error(`Error fetching week data from database`, error);
+    }
 
-          const res_data: ActivityWeek = res;
-          data.push(res_data);
-        } catch (error) {
-          // Not in database, must fetch from Strava & store in database.
-          console.error("Error", error);
-          excludedWeeks.push(monday);
-        }
+    // Retrieve data from Strava API
+    var bf = new Date();
+    var af = null;
+
+    if (all_activities.length != 0) {
+      // all_activities sorted in chronologically ascending order.
+      af = new Date(all_activities[all_activities.length - 1].start_date);
+    }
+
+    const fetched_data: StravaData = await getStravaData(
+      session.userid,
+      session.accessToken,
+      bf,
+      af,
+    );
+
+    // Data freshly retrieved from API
+    const week_data: Array<ActivityWeek> | null = fetched_data.week_data;
+    const raw_data: Array<SummaryActivity> | null = fetched_data.raw_data;
+    all_weeks.concat(week_data);
+    all_activities.concat(raw_data);
+
+    // Add weekly training stats to database
+    if (week_data != null) {
+      try {
+        const response = await fetch("/api/storeTrainingData", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            strava_id: session.userid,
+            activity_weeks: week_data,
+          }),
+        });
+
+        const res: Array<ActivityWeek> = await response.json();
+      } catch (error) {
+        console.error(`Error saving training data (week) ${error}`);
       }
     }
 
-    // All dates cached.
-    if (excludedWeeks.length == 0) {
-      data.sort(compareWeeks);
-      setData(data);
-    }
+    // Add individual activities to database
+    if (raw_data != null) {
+      try {
+        const response = await fetch("/api/storeActivities", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            strava_id: session.userid,
+            activities: raw_data,
+          }),
+        });
 
-    // Fetch missing data from Strava
-    else {
-      var bf = new Date(excludedWeeks[excludedWeeks.length - 1]);
-      bf.setDate(bf.getDate() + 7);
-      if (bf.valueOf() > Date.now()) bf = new Date(); // make sure it gets the entirety of the week.
-      var af = excludedWeeks[0];
-
-      if (apiCalls < MAX_CALLS * 2) {
-        const fetched_data: Array<ActivityWeek> | null = await getStravaData(
-          session.userid,
-          session.accessToken,
-          bf,
-          af,
-        );
-
-        setApiCalls(apiCalls + 5);
-
-        // Add to database
-        if (fetched_data != null) {
-          fetched_data.forEach(async (wk) => {
-            try {
-              const response = await fetch("/api/storeTrainingData", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  strava_id: session.userid,
-                  week_start: wk.week,
-                  activity_week: wk,
-                }),
-              });
-
-              const res = await response.json();
-            } catch (error) {
-              console.error("Error saving training data");
-            }
-          });
-
-          data = data.concat(fetched_data);
-          data.sort(compareWeeks);
-          setData(data);
-        }
-      } else {
-        alert("API calls has surpassed the maximum. Sorry!");
+        const res = await response.json();
+      } catch (error) {
+        console.error(`Error saving activities ${error}`);
       }
     }
 
     // The first and last date that we provide "acute load" data for
-    var firstDate: Date = new Date(bfDate.valueOf() - THREE_MONTHS);
-    var lastDate: Date = new Date(bfDate.valueOf());
+    var firstDate: Date = new Date(new Date().valueOf() - THREE_MONTHS);
+    var lastDate: Date = new Date(new Date().valueOf());
 
-    var weekMileagePoints: Array<MileagePoint> = getPlotData(
+    var weekMileagePoints: Array<MileagePoint> = getMileagePlotData(
       firstDate,
       lastDate,
-      data,
+      all_weeks,
     );
     setWeekMileagePlotData(weekMileagePoints);
+
+    var monthMileagePoints: Array<MileagePoint> = getMileagePlotData(
+      firstDate,
+      lastDate,
+      all_weeks,
+      ONE_MONTH,
+    );
+    setMonthMileagePlotData(monthMileagePoints);
+    setHeatmapData(all_weeks);
+
+    // Update states
+    all_weeks.sort(compareWeeks);
+    setEarliest(new Date(all_weeks[0].week));
+    setWeekData(all_weeks);
+
+    all_activities.sort(compareActivities);
+    setActivities(all_activities);
   };
 
   const updateData = async () => {
-    setBfDate(afDate);
-    setAfDate(new Date(bfDate.valueOf() - SIX_MONTHS));
     fetchData();
   };
 
@@ -176,7 +203,6 @@ export default function Sheets() {
       ) : (
         <></>
       )}
-
       {/* Logged in : Options */}
       {session && (
         <div>
@@ -202,9 +228,28 @@ export default function Sheets() {
             </div>
 
             {/* Right-side content area to view visualizations */}
-            <div className={styles.plotContainer}>
+            <div className={styles.plotContainer} id="plotContainer">
               {viz == 0 && weekMileagePlotData && (
-                <PlotChart plotData={weekMileagePlotData} />
+                <PlotChart
+                  plotData={weekMileagePlotData}
+                  time_interval_label={"7-Day"}
+                />
+              )}
+              {viz == 1 && monthMileagePlotData && (
+                <PlotChart
+                  plotData={monthMileagePlotData}
+                  time_interval_label={"30-Day"}
+                />
+              )}
+              {viz == 2 && activities && (
+                <PlotHistogram activities={activities} />
+              )}
+              {viz == 3 && (
+                <CalHeatmap
+                  data={heatmapData}
+                  latest={new Date()}
+                  earliest={earliest}
+                />
               )}
             </div>
           </div>
