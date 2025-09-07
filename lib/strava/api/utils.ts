@@ -199,7 +199,7 @@ function prettify(json: Array<Activity>): Array<SummaryActivity> {
     var miles: number = 0.000621371192 * activity.distance; // meters to miles
     return {
       distance: roundTwo(miles),
-      start_date: activity.start_date,
+      start_date: new Date(activity.start_date),
       prev_mon: prevMon(new Date(activity.start_date)),
     };
   });

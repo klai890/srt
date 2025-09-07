@@ -28,11 +28,11 @@ export var headers = [
  */
 export function prevMon(date: Date): Date {
   // day: 0 to 6, with 0 as Sunday, 6 as Saturday
-  var day: number = date.getDay() == 0 ? 7 : date.getDay();
+  var day: number = date.getUTCDay() == 0 ? 7 : date.getUTCDay();
   var mon = new Date(date.getTime());
 
   var diff = day - 1;
-  mon.setDate(date.getDate() - diff);
+  mon.setDate(date.getUTCDate() - diff);
 
   mon.setHours(0);
   mon.setMinutes(0);

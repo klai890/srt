@@ -101,8 +101,8 @@ describe("getStravaData()", () => {
         json: () => Promise.resolve(page_three),
       });
 
-    const before = new Date("2018-05-14");
-    const after = new Date("2018-05-02");
+    const before = new Date("2018-05-13T23:59:59Z");
+    const after = new Date("2018-05-02T12:15:09Z");
     const strava_id = 12345;
     const access_token = "abcdefg";
 
