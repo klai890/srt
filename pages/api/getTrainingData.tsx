@@ -38,7 +38,7 @@ export default async function getTrainingData(
 
   const activityWeeks: Array<ActivityWeek> = data.map((d) => {
     return {
-      week: (new Date(d.week_start)).toISOString(),
+      week: new Date(d.week_start).toISOString(),
       monday: d.monday,
       tuesday: d.tuesday,
       wednesday: d.wednesday,

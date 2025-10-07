@@ -67,7 +67,7 @@ export const getStravaData = async function (
       responses = responses.concat(response);
     i++;
   } while (activitiesFetched == PER_PAGE);
-  
+
   // User has no activities
   if (responses.length == 0) {
     return {
