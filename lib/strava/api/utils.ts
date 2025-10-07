@@ -67,7 +67,7 @@ export const getStravaData = async function (
       responses = responses.concat(response);
     i++;
   } while (activitiesFetched == PER_PAGE);
-
+  
   // User has no activities
   if (responses.length == 0) {
     return {
@@ -134,7 +134,7 @@ export const setupCsvTable = async function (
   while (d <= newest) {
     if (d.getDay() != 1) d = prevMon(d);
     wk = {
-      week: d.toLocaleDateString(), // ex: 1/6/2023
+      week: d.toISOString(),
       monday: 0,
       tuesday: 0,
       wednesday: 0,
@@ -167,7 +167,7 @@ function addData(
     let day = activityWeekKey(new Date(run.start_date));
 
     var week: ActivityWeek = csvTable.find(
-      (item) => item.week === mon.toLocaleDateString(),
+      (item) => item.week === mon.toISOString(),
     );
 
     if (week) {
@@ -189,13 +189,12 @@ function addData(
  * @returns array of SummaryActivity : A condensed version
  */
 function prettify(json: Array<Activity>): Array<SummaryActivity> {
-  if (!json) return [];
+  if (!json || json.length == 0) return [];
 
   json = json.filter((activity) => activity.type == "Run");
 
   // second, grab only essential data
   var condensedJson = json.map((activity) => {
-    // var date : Date = new Date(activity.start_date_local);
     var miles: number = 0.000621371192 * activity.distance; // meters to miles
     return {
       distance: roundTwo(miles),

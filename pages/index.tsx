@@ -99,8 +99,8 @@ export default function Sheets() {
     // Data freshly retrieved from API
     const week_data: Array<ActivityWeek> | null = fetched_data.week_data;
     const raw_data: Array<SummaryActivity> | null = fetched_data.raw_data;
-    all_weeks.concat(week_data);
-    all_activities.concat(raw_data);
+    all_weeks = all_weeks.concat(week_data);
+    all_activities = all_activities.concat(raw_data);
 
     // Add weekly training stats to database
     if (week_data != null) {

@@ -39,7 +39,7 @@ export function getMileagePlotData(
 
     try {
       dayMileage = data.find(
-        (item) => item.week == monday.toLocaleDateString(),
+        (item) => item.week == monday.toISOString(),
       )[key];
     } catch {
       dayMileage = 0;
@@ -61,7 +61,7 @@ export function getMileagePlotData(
 
     var key: string = activityWeekKey(d);
     try {
-      element = data.find((item) => item.week == monday.toLocaleDateString())[
+      element = data.find((item) => item.week == monday.toISOString())[
         key
       ];
     } catch {

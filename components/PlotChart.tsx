@@ -1,7 +1,6 @@
 import { Line } from "react-chartjs-2"; // Line chart from react-chartjs-2
 import { Chart as ChartJS, registerables } from "chart.js";
 import React from "react";
-import MileagePoint from "../lib/strava/models/MileagePoint";
 
 // Registering the necessary chart.js components
 ChartJS.register(...registerables);

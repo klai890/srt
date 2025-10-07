@@ -38,7 +38,7 @@ export default async function getTrainingData(
 
   const activityWeeks: Array<ActivityWeek> = data.map((d) => {
     return {
-      week: new Date(d.week_start + "T00:00:00").toLocaleDateString(), // Rename `week_start` to `week`
+      week: (new Date(d.week_start)).toISOString(),
       monday: d.monday,
       tuesday: d.tuesday,
       wednesday: d.wednesday,

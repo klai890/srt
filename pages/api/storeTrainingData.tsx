@@ -15,7 +15,7 @@ export default async function handler(
   var formatted_week_data = week_data.map((wk) => {
     return {
       strava_id: strava_id,
-      week_start: new Date(wk.week).toLocaleDateString(),
+      week_start: new Date(wk.week).toISOString(),
       monday: wk["monday"],
       tuesday: wk["tuesday"],
       wednesday: wk["wednesday"],

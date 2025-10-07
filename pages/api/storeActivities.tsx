@@ -27,7 +27,7 @@ export default async function handler(
     return {
       strava_id: strava_id,
       distance: a.distance,
-      day: new Date(a.start_date).toLocaleDateString(),
+      day: new Date(a.start_date).toISOString()
     };
   });
 
